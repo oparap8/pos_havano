@@ -105,7 +105,7 @@ const OrdersList = () => {
               order.waiter_name? order.waiter_name : "Unassigned"
               }</TableCell>
               <TableCell className="text-right">
-                <Badge >
+                <Badge variant={order.payment_status.toLowerCase()}>
                   {order.payment_status}
                 </Badge>
               </TableCell>

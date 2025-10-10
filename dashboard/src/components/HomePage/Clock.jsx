@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getCurrentDateTime } from "@/utils";
+import { getCurrentDateTime } from "@/lib/utils";
 
 const Clock = () => {
   const [dateTime, setDateTime] = useState(getCurrentDateTime());

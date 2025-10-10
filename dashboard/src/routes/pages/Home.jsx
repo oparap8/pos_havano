@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useMenuStore } from "@/stores/useMenuStore";
 import { useEffect, useState } from "react";
-import MenuList from "@/components/MenuList";
+import { formatCurrency } from "@/lib/utils";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -23,9 +23,6 @@ const Home = () => {
     error: menuError,
   } = useMenuStore();
 
-  
-
-  // return <MenuList />;
 
   useEffect(() => {
     fetchMenuItems();
@@ -97,7 +94,7 @@ const Home = () => {
                             </p> */}
                         </div>
                       </div>
-                      <p>${item.standard_rate}</p>
+                      <p>{formatCurrency(item.standard_rate)}</p>
                     </div>
                   ))}
                 </div>

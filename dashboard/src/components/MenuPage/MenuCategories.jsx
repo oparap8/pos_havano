@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getBgColor } from "@/utils";
+import { getBgColor } from "@/lib/utils";
 import { getMenuCategories } from "@/api";
 import { useContext } from "react";
 import {
@@ -74,7 +74,9 @@ const MenuCategories = () => {
                   }
                 >
                   <div className="flex justify-between items-center gap-2">
-                    <h1 className="text-2xl text-white font-bold">{category.name}</h1>
+                    <h1 className="text-2xl text-white font-bold">
+                      {category.name}
+                    </h1>
                     {selectedCategory.id === category.id && (
                       <div className="border-2 border-white p-1 rounded-full">
                         <div className="w-3 h-3 bg-white rounded-full"></div>
