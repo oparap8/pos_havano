@@ -5,17 +5,26 @@ import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
-	plugins: [react(), tailwindcss()],
-	resolve: {
-		alias: {
-			"@": path.resolve(__dirname, "src"),
-		},
-	},
-	build: {
-		chunkSizeWarningLimit: 1500,
-		outDir: `../urugano/public/frontend`,
-		emptyOutDir: true,
-		target: "es2015",
-		sourcemap: true,
-	},
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 1500,
+    outDir: `../urugano/public/frontend`,
+    emptyOutDir: true,
+    target: "es2015",
+    sourcemap: true,
+  },
+  server: {
+    proxy: {
+      "^/(api|assets|files|app|login|pages|builder_assets|socket.io)": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        ws: true,
+      },
+    },
+  },
 });
