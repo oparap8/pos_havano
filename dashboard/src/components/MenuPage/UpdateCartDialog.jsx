@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,60 +8,59 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { MenuCartContext } from "@/routes/pages/MenuPage";
-import Keyboard from "react-simple-keyboard";
-import "react-simple-keyboard/build/css/index.css";
+import { useCartStore } from "@/stores/useCartStore";
 
-const UpdateCartDialog = ({ isOpen, setIsOpen, item = {} }) => {
-  const { updateCartItem } = useContext(MenuCartContext);
+const UpdateCartDialog = () => {
+  const updateCartItem = useCartStore((state) => state.updateCartItem);
+  const selectedItem = useCartStore((state) => state.selectedCartItem);
+  const isOpen = useCartStore((state) => state.isUpdateDialogOpen);
+  const closeUpdateDialog = useCartStore((state) => state.closeUpdateDialog);
 
   // Local state for form fields
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [remark, setRemark] = useState("");
-  const [focusedField, setFocusedField] = useState(null);
 
   // Populate form when item changes
   useEffect(() => {
-    if (item) {
-      setPrice(item.price ?? "");
-      setQuantity(item.quantity ?? "");
-      setRemark(item.remark ?? "");
+    if (selectedItem) {
+      setPrice(selectedItem.price ?? "");
+      setQuantity(selectedItem.quantity ?? "");
+      setRemark(selectedItem.remark ?? "");
+    } else {
+      setPrice("");
+      setQuantity("");
+      setRemark("");
     }
-  }, [item]);
+  }, [selectedItem]);
 
   const handleConfirm = () => {
     if (!quantity || !price) return;
+    if (!selectedItem?.name) return;
     updateCartItem({
-      ...item,
+      ...selectedItem,
       price: Number(price),
       quantity: Number(quantity),
       remark,
     });
-    setIsOpen(false);
-    setFocusedField(null); // close keyboard too
-  };
-
-  const onKeyboardChange = (input) => {
-    if (focusedField === "price") setPrice(input);
-    if (focusedField === "quantity") setQuantity(input);
-    if (focusedField === "remark") setRemark(input);
+    closeUpdateDialog();
   };
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        setIsOpen(open);
-        if (!open) setFocusedField(null); // hide keyboard when dialog closes
+        if (!open) {
+          closeUpdateDialog();
+        }
       }}
     >
       <DialogContent className="p-6 rounded-xl bg-white shadow-lg">
         <div>
           <DialogHeader className="mb-4">
-            {item?.name && (
+            {selectedItem?.name && (
               <DialogTitle className="text-xl font-semibold">
-                {item.name}
+                {selectedItem.item_name || selectedItem.name}
               </DialogTitle>
             )}
           </DialogHeader>
@@ -72,8 +71,6 @@ const UpdateCartDialog = ({ isOpen, setIsOpen, item = {} }) => {
               <Input
                 type="text"
                 value={price}
-                onFocus={() => setFocusedField("price")}
-                onBlur={() => setFocusedField(null)}
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full"
               />
@@ -84,8 +81,6 @@ const UpdateCartDialog = ({ isOpen, setIsOpen, item = {} }) => {
               <Input
                 type="text"
                 value={quantity}
-                onFocus={() => setFocusedField("quantity")}
-                onBlur={() => setFocusedField(null)}
                 onChange={(e) => setQuantity(e.target.value)}
                 className="w-full"
               />
@@ -95,8 +90,6 @@ const UpdateCartDialog = ({ isOpen, setIsOpen, item = {} }) => {
               <label className="block text-sm font-medium mb-1">Preparation Remark</label>
               <Textarea
                 value={remark}
-                onFocus={() => setFocusedField("remark")}
-                onBlur={() => setFocusedField(null)}
                 onChange={(e) => setRemark(e.target.value)}
                 placeholder="Add a preparation remark..."
                 className="w-full"
@@ -108,8 +101,7 @@ const UpdateCartDialog = ({ isOpen, setIsOpen, item = {} }) => {
             <Button
               variant="outline"
               onClick={() => {
-                setIsOpen(false);
-                setFocusedField(null);
+                closeUpdateDialog();
               }}
             >
               Cancel

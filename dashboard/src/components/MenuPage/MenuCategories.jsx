@@ -1,6 +1,6 @@
 import { getBgColor, getNumberOfItems } from "@/lib/utils";
 import { useMenuStore } from "@/stores/useMenuStore";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Drawer,
   DrawerContent,
@@ -10,13 +10,14 @@ import {
   DrawerTrigger,
 } from "../ui/drawer";
 import { ChevronsRight } from "lucide-react";
-import { MenuCartContext } from "@/routes/pages/MenuPage";
+import { useCartStore } from "@/stores/useCartStore";
 
 const MenuCategories = () => {
   const { menuCategories, fetchMenuCategories } = useMenuStore();
   const [categoryColors, setCategoryColors] = useState({});
   const [categoryCounts, setCategoryCounts] = useState({});
-  const { selectedCategory, setSelectedCategory } = useContext(MenuCartContext);
+  const selectedCategory = useCartStore((state) => state.selectedCategory);
+  const setSelectedCategory = useCartStore((state) => state.setSelectedCategory);
 
   const categories = useMemo(
     () => [

@@ -1,13 +1,13 @@
-import { useContext, useState, useEffect, useMemo } from "react";
-import { MenuCartContext } from "@/routes/pages/MenuPage";
+import { useState, useEffect, useMemo } from "react";
 import MenuItemCard from "@/components/MenuPage/MenuItemCard";
 import { useMenuStore } from "@/stores/useMenuStore";
 import { Search } from "lucide-react";
 import NumPad from "./UpdateCartDialog";
+import { useCartStore } from "@/stores/useCartStore";
 
 const Menu = () => {
   const { menuItems, fetchMenuItems, loading, error } = useMenuStore();
-  const { selectedCategory } = useContext(MenuCartContext);
+  const selectedCategory = useCartStore((state) => state.selectedCategory);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {

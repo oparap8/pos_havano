@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Card,
@@ -8,25 +8,22 @@ import {
   CardContent,
 } from "../ui/card";
 import Clock from "../HomePage/Clock";
-import { MenuCartContext } from "@/routes/pages/MenuPage";
 import { Button } from "../ui/button";
 import { Edit, ShoppingCart, Trash2 } from "lucide-react";
 import UpdateCartDialog from "./UpdateCartDialog";
-import {getOrderItemsWithNames} from '@/api';
+import { useCartStore } from "@/stores/useCartStore";
+import { formatCurrency } from "@/lib/utils";
+import { getOrderItemsWithNames } from "@/api";
+
 
 const Cart = () => {
-  const { cart, addToCart, updateCartItem, removeFromCart } =
-    useContext(MenuCartContext);
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const cart = useCartStore((state) => state.cart);
+  const addToCart = useCartStore((state) => state.addToCart);
+  const removeFromCart = useCartStore((state) => state.removeFromCart);
+  const openUpdateDialog = useCartStore((state) => state.openUpdateDialog);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const orderId = searchParams.get("orderId") || null;
-
-  const handleItemClick = (item) => {
-    setSelectedItem(item);
-    setIsOpen(true);
-  };
 
   useEffect(() => {
     if (orderId) {
@@ -35,13 +32,16 @@ const Cart = () => {
           addToCart({
             id: item.id,
             name: item.name,
+            item_name: item.item_name,
             quantity: item.quantity,
             price: item.price,
+            standard_rate: item.price,
+            remark: item.remark,
           });
         })
       });
     }
-  }, [orderId]);
+  }, [orderId, addToCart]);
   
 
   return (
@@ -66,13 +66,13 @@ const Cart = () => {
             <div className="flex flex-col space-y-1">
               {cart.map((item) => (
                 <div
-                  key={item.id}
+                  key={item.name}
                   className="flex justify-between items-center bg-secondary-background py-2 px-4 rounded-sm"
                 >
                   <div className="flex gap-4 font-bold">
                     <p>x{item.quantity}</p>
-                    <p>{item.name}</p>
-                    <i>${item.price}</i>
+                    <p>{item.item_name || item.name}</p>
+                    <i>{formatCurrency(item.price ?? item.standard_rate ?? 0)}</i>
                   </div>
                   <div className="flex items-center">
                     <div
@@ -89,7 +89,7 @@ const Cart = () => {
                     </div>
                     <div
                       className="cursor-pointer hover:bg-background p-2 rounded-sm group"
-                      onClick={() => handleItemClick(item)}
+                      onClick={() => openUpdateDialog(item)}
                     >
                       <Edit
                         size={20}
@@ -118,11 +118,7 @@ const Cart = () => {
       </Card>
 
       {/* 🔑 Single UpdateCartDialog instance */}
-      <UpdateCartDialog
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
-        item={selectedItem}
-      />
+      <UpdateCartDialog />
     </>
   );
 };

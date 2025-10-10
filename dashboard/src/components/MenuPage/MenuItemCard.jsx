@@ -1,16 +1,21 @@
-import { useState, useContext } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { ShoppingCart, Plus, Minus } from "lucide-react";
-import { MenuCartContext } from "@/routes/pages/MenuPage";
-import NumPad from "./UpdateCartDialog";
+import { Card, CardHeader, CardTitle } from "../ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { useCartStore } from "@/stores/useCartStore";
 
 const MenuItemCard = ({ item }) => {
 
-  const { addToCart } = useContext(MenuCartContext);
+  const addToCart = useCartStore((state) => state.addToCart);
 
   const handleAddToCart = () => {
-    addToCart({ ...item, quantity: 1 });
+    addToCart({
+      name: item.name,
+      item_name: item.item_name,
+      custom_menu_category: item.custom_menu_category,
+      quantity: 1,
+      price: item.standard_rate ?? item.price ?? 0,
+      standard_rate: item.standard_rate ?? item.price ?? 0,
+      remark: "",
+    });
   };
   return (
     <>
