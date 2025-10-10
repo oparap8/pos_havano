@@ -2,12 +2,23 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 function Table({ className, maxHeight, ...props }) {
+  const heightClasses = {
+    sm: "max-h-60",
+    md: "max-h-80",
+    lg: "max-h-96",
+  };
+
+  const isTailwindKey = maxHeight && heightClasses[maxHeight];
+  const styleHeight = !isTailwindKey && maxHeight ? { maxHeight } : undefined;
+
   return (
     <div
       data-slot="table-container"
-      className={cn("relative w-full overflow-x-auto max-h-full overflow-y-auto rounded-2xl border border-border bg-background shadow-sm touch-pan-y",
-        maxHeight && `max-h-${maxHeight}`
+      className={cn(
+        "relative w-full overflow-x-auto overflow-y-auto rounded-2xl border border-border bg-background shadow-sm touch-pan-y",
+        isTailwindKey && heightClasses[maxHeight]
       )}
+      style={styleHeight}
     >
       <table
         data-slot="table"

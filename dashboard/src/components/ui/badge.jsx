@@ -20,6 +20,7 @@ const badgeVariants = cva(
         pending: "border-transparent bg-orange-500 [a&]:hover:bg-orange-500/90",
         served: "border-transparent bg-yellow-500 [a&]:hover:bg-yellow-500/90",
         paid: "border-transparent bg-green-500 [a&]:hover:bg-green-500/90",
+        unpaid: "border-transparent bg-red-500 [a&]:hover:bg-red-500/90",
         available: "border-transparent bg-green-600 text-green-100",
         occupied: "border-transparent bg-yellow-500 text-yellow-100",
         booked: "border-transparent bg-red-600 text-red-100",

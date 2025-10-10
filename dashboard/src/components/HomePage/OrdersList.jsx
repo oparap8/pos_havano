@@ -1,78 +1,3 @@
-// import {
-//   Table,
-//   TableBody,
-//   TableCaption,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from "@/components/ui/table";
-// import { getOrderListDetails } from "@/api";
-// import { useEffect, useState } from "react";
-// import { Badge } from "@/components/ui/badge";
-// import { Button } from "@/components/ui/button";
-// import OrdersFilter from "./OrdersFilter";
-// import { useNavigate } from "react-router-dom";
-
-// const OrdersList = () => {
-//   const [orders, setOrders] = useState([]);
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         const orderDetails = await getOrderListDetails();
-//         console.log(orderDetails);
-//         setOrders(orderDetails);
-//       } catch (error) {
-//         console.error("Error fetching order details:", error);
-//       }
-//     };
-
-//     fetchData();
-//   }, []);
-
-//   return (
-//     <>
-//       <TableCaption className="text-lg font-bold flex justify-between items-center">
-//         <p>Orders</p>
-//         <Button variant="link" onClick={() => navigate("/orders")}>View All</Button>
-//       </TableCaption>
-//       <OrdersFilter />
-//       <Table className="px-4">
-//         <TableHeader>
-//           <TableRow className="h-10 font-bold">
-//             <TableHead className="w-[100px] text-xl font-bold">ID</TableHead>
-//             <TableHead className="text-xl font-bold">Table</TableHead>
-//             <TableHead className="text-xl font-bold">Waiter</TableHead>
-//             <TableHead className="text-right text-xl font-bold">
-//               Status
-//             </TableHead>
-//           </TableRow>
-//         </TableHeader>
-//         <TableBody className="divide-none">
-//           {orders.length === 0 && <TableRow><TableCell colSpan={4} className="text-center">No orders found</TableCell></TableRow>}
-//            {orders.map((order) => (
-//             <TableRow key={order.id} className="h-10">
-//               <TableCell className="font-medium">{order.id}</TableCell>
-//               <TableCell>{order.tableNumber}</TableCell>
-//               <TableCell>{order.employeeName}</TableCell>
-//               <TableCell className={`text-right`}>
-//                 <Badge variant={order.status.toLowerCase()}>
-//                   {order.status}
-//                 </Badge>
-//               </TableCell>
-//             </TableRow>
-//           ))}
-//         </TableBody>
-//       </Table>
-//     </>
-//   );
-// };
-
-// export default OrdersList;
-
-
 import {
   Table,
   TableBody,
@@ -82,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getOrderListDetails } from "@/api";
+import { useOrderStore } from "@/stores/useOrderStore";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,7 +15,8 @@ import OrdersFilter from "./OrdersFilter";
 import { useNavigate } from "react-router-dom";
 
 const OrdersList = () => {
-  const [orders, setOrders] = useState([]);
+  const { orders, loading: orderLoading, error: orderError, fetchOrders } = useOrderStore();
+
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [filters, setFilters] = useState({
     status: "",
@@ -100,23 +26,13 @@ const OrdersList = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const orderDetails = await getOrderListDetails();
-        setOrders(orderDetails);
-        setFilteredOrders(orderDetails);
-      } catch (error) {
-        console.error("Error fetching order details:", error);
-      }
-    };
-    fetchData();
+    fetchOrders();
+    setFilteredOrders(orders.filter((o) => o.payment_status == "Unpaid"));
   }, []);
 
   // Apply filters whenever filters or orders change
   useEffect(() => {
-    let filtered = orders;
-    console.log(filters);
-    console.log(orders);
+    let filtered = orders.filter((o) => o.payment_status == "Unpaid");
 
     if (filters.status) {
       filtered = filtered.filter(
@@ -144,7 +60,10 @@ const OrdersList = () => {
       <TableCaption className="text-lg font-bold flex justify-between items-center">
         <p>Orders</p>
         <div>
-          <Button variant="link" onClick={() => setFilters({status: "", employee: "", table: ""})}>
+          <Button
+            variant="link"
+            onClick={() => setFilters({ status: "", employee: "", table: "" })}
+          >
             Clear Filters
           </Button>
           <Button variant="link" onClick={() => navigate("/orders")}>
@@ -156,7 +75,7 @@ const OrdersList = () => {
       {/* Pass filters + setter to child */}
       <OrdersFilter filters={filters} setFilters={setFilters} />
 
-      <Table className="px-4">
+      <Table className="px-4" maxHeight="25rem">
         <TableHeader>
           <TableRow className="h-10 font-bold">
             <TableHead className="w-[100px] text-xl font-bold">ID</TableHead>
@@ -177,13 +96,17 @@ const OrdersList = () => {
             </TableRow>
           )}
           {filteredOrders.map((order) => (
-            <TableRow key={order.id} className="h-10">
-              <TableCell className="font-medium">{order.id}</TableCell>
-              <TableCell>{order.tableNumber}</TableCell>
-              <TableCell>{order.employeeName}</TableCell>
+            <TableRow key={order.name} className="h-10">
+              <TableCell className="font-medium">{order.name}</TableCell>
+              <TableCell>{
+              order.table_number? `Table ${order.table_number}` : "Unassigned"
+              }</TableCell>
+              <TableCell>{
+              order.waiter_name? order.waiter_name : "Unassigned"
+              }</TableCell>
               <TableCell className="text-right">
-                <Badge variant={order.status.toLowerCase()}>
-                  {order.status}
+                <Badge variant={order.payment_status.toLowerCase()}>
+                  {order.payment_status}
                 </Badge>
               </TableCell>
             </TableRow>

@@ -10,32 +10,24 @@ import {
 } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { getMenuItems } from "@/api";
+import { useMenuStore } from "@/stores/useMenuStore";
 import { useEffect, useState } from "react";
+import { formatCurrency } from "@/lib/utils";
 
 const Home = () => {
   const navigate = useNavigate();
-  const [menuItems, setMenuItems] = useState([]);
+  const {
+    menuItems,
+    fetchMenuItems,
+    loading: menuLoading,
+    error: menuError,
+  } = useMenuStore();
 
-  function getRandomNumber(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
 
   useEffect(() => {
-    const fetchMenuItems = async () => {
-      const items = await getMenuItems();
-
-      // Add random orders to each item
-      const itemsWithOrders = items.map((item) => ({
-        ...item,
-        orders: getRandomNumber(54, 100),
-      }));
-
-      setMenuItems(itemsWithOrders);
-    };
-
     fetchMenuItems();
   }, []);
+
   return (
     <div className="bg-secondary-background">
       <Container>
@@ -84,30 +76,27 @@ const Home = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {menuItems
-                    .sort((a, b) => b.orders - a.orders)
-                    .slice(0, 10)
-                    .map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between bg-secondary-background rounded-md py-2 px-4"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="p-2 h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center">
-                            <p className="text-lg font-bold text-white">
-                              {index + 1}
-                            </p>
-                          </div>
-                          <div>
-                            <p>{item.name}</p>
-                            <p className="text-xs text-gray-500">
-                              Orders: {item.orders}
-                            </p>
-                          </div>
+                  {menuItems.slice(0, 10).map((item, index) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between bg-secondary-background rounded-md py-2 px-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center">
+                          <p className="text-lg font-bold text-white">
+                            {index + 1}
+                          </p>
                         </div>
-                        <p>${item.price}</p>
+                        <div>
+                          <p>{item.item_name}</p>
+                          {/* <p className="text-xs text-gray-500">
+                              Orders: {item.orders}
+                            </p> */}
+                        </div>
                       </div>
-                    ))}
+                      <p>{formatCurrency(item.standard_rate)}</p>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

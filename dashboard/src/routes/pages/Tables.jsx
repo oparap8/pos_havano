@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Utensils } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { getBgColor } from "@/utils";
+import { getBgColor } from "@/lib/utils";
 
 const Tables = () => {
   const [tables, setTables] = useState([]);
