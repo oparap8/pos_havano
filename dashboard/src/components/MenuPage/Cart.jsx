@@ -117,7 +117,6 @@ const Cart = () => {
         </CardFooter>
       </Card>
 
-      {/* 🔑 Single UpdateCartDialog instance */}
       <UpdateCartDialog />
     </>
   );

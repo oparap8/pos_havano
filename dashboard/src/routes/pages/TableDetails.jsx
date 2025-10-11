@@ -87,8 +87,8 @@ const TableDetails = () => {
       <div>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-primary my-4">
-            {tableOrders.table?.tableNumber
-              ? `Table ${tableOrders.table.tableNumber}`
+            {tableDetails?.table_number
+              ? `Table ${tableDetails.table_number}`
               : id}
           </h1>
           {tableDetails?.status ? (
@@ -103,8 +103,8 @@ const TableDetails = () => {
               <CardHeader>
                 <CardTitle>
                   Orders for{" "}
-                  {tableOrders.table?.tableNumber
-                    ? `Table ${tableOrders.table.tableNumber}`
+                  {tableDetails?.table_number
+                    ? `Table ${tableDetails.table_number}`
                     : id}
                 </CardTitle>
               </CardHeader>
@@ -135,7 +135,10 @@ const TableDetails = () => {
                       </TableRow>
                     ) : tableOrdersError ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-red-500">
+                        <TableCell
+                          colSpan={4}
+                          className="text-center text-red-500"
+                        >
                           <Error />
                         </TableCell>
                       </TableRow>
@@ -149,11 +152,7 @@ const TableDetails = () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            {
-                              formatCurrency(
-                                order.total_price
-                              )
-                            }
+                            {formatCurrency(order.total_price)}
                           </TableCell>
                           <TableCell className="text-right">
                             <Button
@@ -165,10 +164,7 @@ const TableDetails = () => {
                               <PenBox />
                               Edit
                             </Button>
-                            <Button
-                              variant="secondary"
-                              className="ml-2 "
-                            >
+                            <Button variant="secondary" className="ml-2 ">
                               <Printer />
                               Print
                             </Button>
@@ -186,14 +182,9 @@ const TableDetails = () => {
                       <TableCell className="font-bold">Total</TableCell>
                       <TableCell></TableCell>
                       <TableCell className="font-bold text-right">
-                        {
-                          formatCurrency(
-                            tableOrders.reduce(
-                              (sum, o) => sum + o.total_price,
-                              0
-                            )
-                          )
-                        }
+                        {formatCurrency(
+                          tableOrders.reduce((sum, o) => sum + o.total_price, 0)
+                        )}
                       </TableCell>
                       <TableCell></TableCell>
                     </TableRow>
@@ -211,9 +202,9 @@ const TableDetails = () => {
             <Card className="min-h-[80vh]">
               <CardHeader>
                 <CardTitle>
-                  {tableOrders.table?.tableNumber
-                    ? `Table ${tableOrders.table.tableNumber} Details`
-                    : `${id} Details`}
+                  {tableDetails?.table_number
+                    ? `Table ${tableDetails.table_number} Details`
+                    : id + " Details"}
                 </CardTitle>
               </CardHeader>
               <CardContent>

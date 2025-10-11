@@ -90,4 +90,5 @@ export const useCartStore = create((set, get) => ({
       selectedCartItem: null,
       isUpdateDialogOpen: false,
     }),
+
 }));

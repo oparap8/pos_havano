@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/useCartStore";
+import { useForm } from "react-hook-form";
 
 const UpdateCartDialog = () => {
   const updateCartItem = useCartStore((state) => state.updateCartItem);
@@ -16,26 +17,33 @@ const UpdateCartDialog = () => {
   const isOpen = useCartStore((state) => state.isUpdateDialogOpen);
   const closeUpdateDialog = useCartStore((state) => state.closeUpdateDialog);
 
-  // Local state for form fields
-  const [price, setPrice] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [remark, setRemark] = useState("");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm({
+    defaultValues: {
+      price: "",
+      quantity: "",
+      remark: "",
+    },
+  });
 
   // Populate form when item changes
   useEffect(() => {
     if (selectedItem) {
-      setPrice(selectedItem.price ?? "");
-      setQuantity(selectedItem.quantity ?? "");
-      setRemark(selectedItem.remark ?? "");
+      reset({
+        price: selectedItem.price ?? "",
+        quantity: selectedItem.quantity ?? "",
+        remark: selectedItem.remark ?? "",
+      });
     } else {
-      setPrice("");
-      setQuantity("");
-      setRemark("");
+      reset({ price: "", quantity: "", remark: "" });
     }
-  }, [selectedItem]);
+  }, [selectedItem, reset]);
 
-  const handleConfirm = () => {
-    if (!quantity || !price) return;
+  const handleConfirm = handleSubmit(({ price, quantity, remark }) => {
     if (!selectedItem?.name) return;
     updateCartItem({
       ...selectedItem,
@@ -44,7 +52,7 @@ const UpdateCartDialog = () => {
       remark,
     });
     closeUpdateDialog();
-  };
+  });
 
   return (
     <Dialog
@@ -64,57 +72,44 @@ const UpdateCartDialog = () => {
               </DialogTitle>
             )}
           </DialogHeader>
-          <div className="space-y-4">
+          <form onSubmit={handleConfirm} className="space-y-4">
             {/* Price */}
             <div>
               <label className="block text-sm font-medium mb-1">Price</label>
-              <Input
-                type="text"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="w-full"
-              />
+              <Input type="number" step="0.01" min="0" {...register("price")} className="w-full" />
             </div>
             {/* Quantity */}
             <div>
               <label className="block text-sm font-medium mb-1">Quantity</label>
-              <Input
-                type="text"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="w-full"
-              />
+              <Input type="number" min="1" {...register("quantity")} className="w-full" />
             </div>
             {/* Preparation Remark */}
             <div>
               <label className="block text-sm font-medium mb-1">Preparation Remark</label>
               <Textarea
-                value={remark}
-                onChange={(e) => setRemark(e.target.value)}
+                {...register("remark")}
                 placeholder="Add a preparation remark..."
                 className="w-full"
               />
             </div>
-          </div>
-          {/* Actions */}
-          <div className="mt-6 flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                closeUpdateDialog();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="bg-cyan-600 text-white hover:bg-cyan-700"
-              onClick={handleConfirm}
-            >
-              OK
-            </Button>
-          </div>
+            {/* Actions */}
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  closeUpdateDialog();
+                  reset();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                OK
+              </Button>
+            </div>
+          </form>
         </div>
-        
       </DialogContent>
     </Dialog>
   );

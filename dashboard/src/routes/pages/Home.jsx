@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useMenuStore } from "@/stores/useMenuStore";
 import { useEffect, useState } from "react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getCurrentUserFullName } from "@/lib/utils";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -22,10 +22,26 @@ const Home = () => {
     loading: menuLoading,
     error: menuError,
   } = useMenuStore();
+  const [userName, setUserName] = useState(null);
 
 
   useEffect(() => {
     fetchMenuItems();
+  }, []);
+
+  useEffect(() => {
+    const loadUserName = async () => {
+      try {
+        const name = await getCurrentUserFullName();
+        if (name) {
+          setUserName(name);
+        }
+      } catch (err) {
+        console.error("Failed to load user name:", err);
+      }
+    };
+
+    loadUserName();
   }, []);
 
   return (
@@ -35,7 +51,7 @@ const Home = () => {
           <div className="col-span-3">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <h1 className="text-xl font-bold">Hello, Havano</h1>
+                <h1 className="text-xl font-bold">Hello, {userName || "Havano"}</h1>
                 <p className="text-xs text-gray-500">
                   Give your customers the best service
                 </p>
