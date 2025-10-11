@@ -17,8 +17,8 @@ const Footer = () => {
                   end
                   className={({ isActive }) =>
                     isActive
-                      ? "text-secondary font-bold border-y-2 border-secondary"
-                      : "text-secondary hover:border-y-2 hover:border-secondary"
+                      ? "text-primary font-semibold border-b-2 border-primary pb-1 transition-colors"
+                      : "text-primary/70 hover:text-primary hover:border-b-2 hover:border-primary pb-1 transition-colors"
                   }
                 >
                   {link.name}

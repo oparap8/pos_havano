@@ -3,8 +3,11 @@ import { db } from "@/lib/frappeClient";
 
 export const useOrderStore = create((set, get) => ({
   orders: [],
+  tableOrders: [],
   loading: false,
   error: null,
+  tableOrdersLoading: false,
+  tableOrdersError: null,
 
   fetchOrders: async () => {
     set({ loading: true, error: null });
@@ -45,6 +48,21 @@ export const useOrderStore = create((set, get) => ({
     } catch (err) {
       console.error("Fetch error:", err);
       set({ error: err.message, loading: false });
+    }
+  },
+
+
+  fetchTableOrders: async (table) => {
+    set({ tableOrdersLoading: true, tableOrdersError: null });
+    try {
+      const data = await db.getDocList("HA Order", {
+        fields: ["name", "payment_status", "total_price", "waiter"],
+        filters: [["table", "=", table]],
+      });
+      set({ tableOrders: data, tableOrdersLoading: false });
+    } catch (err) {
+      console.error("Table order fetch error:", err);
+      set({ tableOrdersError: err.message, tableOrdersLoading: false });
     }
   },
 }));

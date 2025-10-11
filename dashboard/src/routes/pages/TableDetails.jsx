@@ -1,4 +1,5 @@
 import Container from "@/components/Shared/Container";
+import Error from "@/components/Error";
 import {
   Table,
   TableBody,
@@ -6,12 +7,10 @@ import {
   TableHeader,
   TableRow,
   TableCell,
-  TableFooter,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { getOrdersForTable } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -20,35 +19,58 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PenBox, Printer } from "lucide-react";
-
+import { useWaiterStore } from "@/stores/useWaiterStore";
+import { useOrderStore } from "@/stores/useOrderStore";
+import { useTableStore } from "@/stores/useTableStore";
+import { formatCurrency } from "@/lib/utils";
 
 const TableDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [tableOrders, setTableOrders] = useState({
-    table: null,
-    orders: [],
-    grandTotal: 0,
+  const { register, setValue, watch } = useForm({
+    defaultValues: {
+      guestName: "",
+      waiter: "",
+      remarks: "",
+    },
   });
-  const { register, handleSubmit, formState: { values } } = useForm({
-    guestName: "",
-    waiter: "",
-    remarks: "",
-  });
+  const { waiters, loadingWaiters, errorWaiters, fetchWaiters } =
+    useWaiterStore();
+
+  const {
+    tableOrders,
+    tableOrdersLoading,
+    tableOrdersError,
+    fetchTableOrders,
+  } = useOrderStore();
+
+  const { tableDetails, loadingTableDetails, errorTableDetails, fetchTableDetails } =
+    useTableStore();
 
   useEffect(() => {
-    const fetchTableOrders = async () => {
-      try {
-        const ordersT = await getOrdersForTable(id);
-        console.log("Orders for table:", ordersT);
-        setTableOrders(ordersT);
-      } catch (err) {
-        console.error(err);
-      }
-    };
+    if (!id) return;
+    fetchTableDetails(id);
+  }, [id, fetchTableDetails]);
 
-    fetchTableOrders();
-  }, [id]);
+  useEffect(() => {
+    if (!id) return;
+    fetchTableOrders(id);
+    fetchWaiters();
+  }, [id, fetchTableOrders, fetchWaiters]);
+
+  useEffect(() => {
+    if (tableOrders.length === 0) {
+      setValue("waiter", "");
+      return;
+    }
+    const activeWaiter = tableOrders.find((order) => order.waiter);
+    if (activeWaiter?.waiter) {
+      setValue("waiter", activeWaiter.waiter);
+    } else {
+      setValue("waiter", "");
+    }
+  }, [tableOrders, setValue]);
+
 
   const submitText = (status) => {
     if (status === "Available") {
@@ -58,24 +80,33 @@ const TableDetails = () => {
     } else if (status === "Booked") {
       return "Open Table";
     }
-  }
+  };
 
   return (
     <Container>
       <div>
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-primary my-4">Table {id}</h1>
-          {tableOrders.table && (
-            <Badge variant={tableOrders.table.status.toLowerCase()}>
-              {tableOrders.table.status}
+          <h1 className="text-2xl font-bold text-primary my-4">
+            {tableOrders.table?.tableNumber
+              ? `Table ${tableOrders.table.tableNumber}`
+              : id}
+          </h1>
+          {tableDetails?.status ? (
+            <Badge variant={tableDetails.status.toLowerCase()}>
+              {tableDetails.status}
             </Badge>
-          )}
+          ) : null}
         </div>
-        <div className="grid grid-cols-5 gap-4">
-          <div className="col-span-3 h-full">
-            <Card className="h-full">
+        <div className="flex gap-4">
+          <div className="flex-3">
+            <Card className="min-h-[80vh]">
               <CardHeader>
-                <CardTitle>Orders for Table {id}</CardTitle>
+                <CardTitle>
+                  Orders for{" "}
+                  {tableOrders.table?.tableNumber
+                    ? `Table ${tableOrders.table.tableNumber}`
+                    : id}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <Table className="px-4">
@@ -96,23 +127,39 @@ const TableDetails = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody className="divide-none">
-                    {tableOrders.orders.length > 0 ? (
-                      tableOrders.orders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell>{order.id}</TableCell>
+                    {tableOrdersLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center">
+                          Loading orders…
+                        </TableCell>
+                      </TableRow>
+                    ) : tableOrdersError ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-red-500">
+                          <Error />
+                        </TableCell>
+                      </TableRow>
+                    ) : tableOrders.length > 0 ? (
+                      tableOrders.map((order) => (
+                        <TableRow key={order.name}>
+                          <TableCell>{order.name}</TableCell>
                           <TableCell className="text-right">
-                            <Badge variant={order.status.toLowerCase()}>
-                              {order.status}
+                            <Badge variant={order.payment_status.toLowerCase()}>
+                              {order.payment_status}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            ${order.totalAmount}
+                            {
+                              formatCurrency(
+                                order.total_price
+                              )
+                            }
                           </TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="secondary"
                               onClick={() =>
-                                navigate(`/menu/?orderId=${order.id}`)
+                                navigate(`/menu/?orderId=${order.name}`)
                               }
                             >
                               <PenBox />
@@ -130,17 +177,23 @@ const TableDetails = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={3} className="text-center">
-                          No orders for this table
+                        <TableCell colSpan={4} className="text-center">
+                          No unpaid orders for this table
                         </TableCell>
                       </TableRow>
                     )}
-                    {/* Footer row for grand total */}
                     <TableRow>
                       <TableCell className="font-bold">Total</TableCell>
                       <TableCell></TableCell>
                       <TableCell className="font-bold text-right">
-                        ${tableOrders.grandTotal}
+                        {
+                          formatCurrency(
+                            tableOrders.reduce(
+                              (sum, o) => sum + o.total_price,
+                              0
+                            )
+                          )
+                        }
                       </TableCell>
                       <TableCell></TableCell>
                     </TableRow>
@@ -154,10 +207,14 @@ const TableDetails = () => {
               </CardFooter>
             </Card>
           </div>
-          <div className="col-span-2 h-full">
-            <Card className="h-full">
+          <div className="flex-2 h-full">
+            <Card className="min-h-[80vh]">
               <CardHeader>
-                <CardTitle>Table {id} Details</CardTitle>
+                <CardTitle>
+                  {tableOrders.table?.tableNumber
+                    ? `Table ${tableOrders.table.tableNumber} Details`
+                    : `${id} Details`}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <form>
@@ -168,20 +225,44 @@ const TableDetails = () => {
                     </div>
                     <div className="space-y-4">
                       <Label>Waiter</Label>
-                      <Select {...register("waiter")}>
+                      <Select
+                        value={watch("waiter")}
+                        onValueChange={(value) =>
+                          setValue("waiter", value, { shouldValidate: true })
+                        }
+                        disabled={loadingWaiters}
+                      >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select waiter" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="waiter1">Waiter 1</SelectItem>
-                          <SelectItem value="waiter2">Waiter 2</SelectItem>
-                          <SelectItem value="waiter3">Waiter 3</SelectItem>
+                          {loadingWaiters && (
+                            <SelectItem value="loading" disabled>
+                              Loading waiters...
+                            </SelectItem>
+                          )}
+                          {!loadingWaiters && waiters.length === 0 && (
+                            <SelectItem value="no-waiters" disabled>
+                              No waiters available
+                            </SelectItem>
+                          )}
+                          {waiters.map((waiter) => (
+                            <SelectItem key={waiter.name} value={waiter.name}>
+                              {waiter.waiter_name || waiter.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
+                      {errorWaiters && (
+                        <p className="text-sm text-red-500">{errorWaiters}</p>
+                      )}
                     </div>
                     <div className="space-y-4">
                       <Label>Remarks</Label>
-                      <Textarea {...register("remarks")} />
+                      <Textarea
+                        {...register("remarks")}
+                        className="min-h-[200px]"
+                      />
                     </div>
                     <div className="space-y-4">
                       <Button type="submit" block>
@@ -206,9 +287,6 @@ const TableDetails = () => {
                             Print Bill
                           </Button>
                         )}
-                      {/* <Button className="bg-gray-300 text-black" block>
-                        Reprint KOT
-                      </Button> */}
                     </div>
                   </div>
                 </form>

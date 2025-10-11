@@ -52,6 +52,7 @@ const Home = () => {
                 variant="secondary"
                 size="lg"
                 onClick={() => navigate("/menu")}
+                className="border-primary/30 shadow-sm hover:shadow-md"
               >
                 TAKE AWAY
               </Button>

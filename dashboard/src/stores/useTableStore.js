@@ -1,14 +1,17 @@
 import { create } from "zustand";
 import { db } from "@/lib/frappeClient";
+import TableDetails from "@/routes/pages/TableDetails";
 
 export const useTableStore = create((set) => ({
   tables: [],
   floors: [],
-
+  tableDetails: {},
   loadingTables: false,
   loadingFloors: false,
+  loadingTableDetails: false,
   errorTables: null,
   errorFloors: null,
+  errorTableDetails: null,
 
   fetchTables: async () => {
     set({ loadingTables: true, errorTables: null });
@@ -33,6 +36,19 @@ export const useTableStore = create((set) => ({
     } catch (err) {
       console.error("Floor fetch error:", err);
       set({ errorFloors: err.message, loadingFloors: false });
+    }
+  },
+
+  fetchTableDetails: async (tableName) => {
+    set({ loadingTableDetails: true, errorTableDetails: null });
+    try {
+      const data = await db.getDoc("HA Table", tableName, {
+        fields: ["name", "table_number", "capacity", "status", "floor"],
+      });
+      set({ tableDetails: data, loadingTableDetails: false });
+    } catch (err) {
+      console.error("Table details fetch error:", err);
+      set({ errorTableDetails: err.message, loadingTableDetails: false });
     }
   },
 }));

@@ -55,7 +55,7 @@ const Tables = () => {
                   setFilter((prev) => ({ ...prev, floor: value }))
                 }
               >
-                <SelectTrigger className="bg-background w-25">
+                <SelectTrigger className="bg-background w-40">
                   <SelectValue placeholder="Select Floor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -76,7 +76,7 @@ const Tables = () => {
                   setFilter((prev) => ({ ...prev, status: value }))
                 }
               >
-                <SelectTrigger className="bg-background w-25">
+                <SelectTrigger className="bg-background w-40">
                   <SelectValue placeholder="Select Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -97,7 +97,7 @@ const Tables = () => {
                 (filter.floor === "All" || table.floor === filter.floor)
             )
             .map((table) => (
-              <Link key={table.id} to={`/tables/${table.id}`}>
+              <Link key={table.name} to={`/tables/${table.name}`}>
                 <Card className="cursor-pointer">
                   <CardHeader className="flex justify-between items-center">
                     <CardTitle>{`Table ${table.table_number}`}</CardTitle>
