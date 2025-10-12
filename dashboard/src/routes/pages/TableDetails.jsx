@@ -111,9 +111,9 @@ const TableDetails = () => {
     if (status === "Available") {
       return "Assign Table";
     } else if (status === "Occupied") {
-      return "Close Table";
+      return "Mark as Paid";
     } else if (status === "Booked") {
-      return "Open Table";
+      return "Close Table";
     }
   };
 
@@ -227,6 +227,27 @@ const TableDetails = () => {
     navigate(`/menu`);
   };
 
+  const dialogDescription = (() => {
+    if (viewOrder) {
+      const parts = [
+        viewOrder.customer_name &&
+          `Customer: ${viewOrder.customer_name}`,
+        viewOrder.waiter_display &&
+          `Waiter: ${viewOrder.waiter_display}`,
+        viewOrder.table_display &&
+          `Table: ${viewOrder.table_display}`,
+      ].filter(Boolean);
+      return parts.length ? parts.join(" • ") : "Order details";
+    }
+    if (viewOrderLoading) {
+      return "Loading order details...";
+    }
+    if (viewOrderError) {
+      return "Unable to load order details.";
+    }
+    return "Select an order to view its details.";
+  })();
+
   if (errorTableDetails) {
     return <Error message={errorTableDetails} />;
   }
@@ -316,14 +337,6 @@ const TableDetails = () => {
                               <Eye />
                               View
                             </Button>
-                            {/* <Button
-                              variant="secondary"
-                              className="ml-2"
-                              onClick={() => handleEditOrder(order.name)}
-                            >
-                              <PenBox />
-                              Edit
-                            </Button> */}
                             <Button variant="secondary" className="ml-2 ">
                               <Printer />
                               Print
@@ -422,8 +435,7 @@ const TableDetails = () => {
                     </div>
                     <div className="space-y-4">
                       <Button type="submit" block>
-                        {tableOrders.table &&
-                          submitText(tableOrders.table.status)}
+                        {tableDetails && submitText(tableDetails.status)}
                       </Button>
                       {tableOrders.table &&
                         tableOrders.table.status === "Booked" && (
@@ -464,20 +476,7 @@ const TableDetails = () => {
             <DialogTitle>
               {selectedOrderId ? `Order ${selectedOrderId}` : "Order Details"}
             </DialogTitle>
-            {viewOrder && (
-              <DialogDescription>
-                {[
-                  viewOrder.customer_name &&
-                    `Customer: ${viewOrder.customer_name}`,
-                  viewOrder.waiter_display &&
-                    `Waiter: ${viewOrder.waiter_display}`,
-                  viewOrder.table_display &&
-                    `Table: ${viewOrder.table_display}`,
-                ]
-                  .filter(Boolean)
-                  .join(" • ")}
-              </DialogDescription>
-            )}
+            <DialogDescription>{dialogDescription}</DialogDescription>
           </DialogHeader>
           {viewOrderLoading ? (
             <div className="flex justify-center py-6">
