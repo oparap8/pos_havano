@@ -1,10 +1,17 @@
 import { create } from "zustand";
+import { db } from "@/lib/frappeClient";
 
 export const useCartStore = create((set, get) => ({
   cart: [],
+  orderType: "Dine In",
+  activeTableId: null,
+  activeWaiterId: null,
+  activeOrderId: null,
+  customerName: "",
   selectedCategory: { id: "all", name: "All" },
   selectedCartItem: null,
   isUpdateDialogOpen: false,
+
 
   addToCart: (item) =>
     set((state) => {
@@ -14,17 +21,15 @@ export const useCartStore = create((set, get) => ({
         return {};
       }
       const existing = state.cart.find((cartItem) => cartItem.name === identifier);
-      const normalizedQuantity = Number(item.quantity ?? 1);
-      const resolvedPrice = item.price ?? item.standard_rate ?? 0;
+      const resolvedPrice = item.standard_rate ?? 0;
 
       if (existing) {
-        const increment = isNaN(normalizedQuantity) ? 1 : normalizedQuantity;
         return {
           cart: state.cart.map((cartItem) =>
             cartItem.name === identifier
               ? {
                   ...cartItem,
-                  quantity: cartItem.quantity + increment,
+                  quantity: cartItem.quantity + 1,
                   price: resolvedPrice,
                 }
               : cartItem
@@ -37,7 +42,7 @@ export const useCartStore = create((set, get) => ({
           ...state.cart,
           {
             ...item,
-            quantity: isNaN(normalizedQuantity) ? 1 : normalizedQuantity,
+            quantity: 1,
             price: resolvedPrice,
           },
         ],
@@ -72,6 +77,38 @@ export const useCartStore = create((set, get) => ({
 
   clearCart: () => set({ cart: [] }),
 
+  loadCartFromOrder: async (order_id) => {
+    const order = await db.getDoc("HA Order", order_id, {
+      fields: [
+        "name",
+        "order_type",
+        "customer_name",
+        "table",
+        "waiter",
+        "order_items",
+      ],
+    });
+
+// custom_menu_category: "Dessert";
+// item_name: "Pizza";
+// name: "MU-03";
+// price: 10000;
+// quantity: 1;
+// remark: "";
+// standard_rate: 10000;
+
+    set({
+      cart: order.order_items.map((item) => ({
+        name: item.menu_item,
+        item_name: item.menu_item_name,
+        quantity: item.qty,
+        price: item.rate ?? 0,
+        remark: item.preparation_remark ?? "",
+      })),
+    });
+  },
+    
+
   setSelectedCategory: (category) => set({ selectedCategory: category }),
 
   openUpdateDialog: (item) => {
@@ -91,4 +128,23 @@ export const useCartStore = create((set, get) => ({
       isUpdateDialogOpen: false,
     }),
 
+    startNewTableOrder: (tableId, waiterId, customerName = "") => {
+      set({
+        orderType: "Dine In",
+        activeTableId: tableId,
+        activeWaiterId: waiterId,
+        activeOrderId: null,
+        customerName,
+      });
+    },
+
+    startNewTakeAwayOrder: () => {
+      set({
+        orderType: "Take Away",
+        activeTableId: null,
+        activeWaiterId: null,
+        activeOrderId: null,
+        customerName: "",
+      });
+    }
 }));

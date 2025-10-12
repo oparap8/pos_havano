@@ -1,5 +1,8 @@
 import Container from "@/components/Shared/Container";
 import Error from "@/components/Error";
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import {
   Table,
   TableBody,
@@ -8,11 +11,8 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ import { PenBox, Printer } from "lucide-react";
 import { useWaiterStore } from "@/stores/useWaiterStore";
 import { useOrderStore } from "@/stores/useOrderStore";
 import { useTableStore } from "@/stores/useTableStore";
+import { useCartStore } from "@/stores/useCartStore";
 import { formatCurrency } from "@/lib/utils";
 
 const TableDetails = () => {
@@ -29,7 +30,7 @@ const TableDetails = () => {
   const { id } = useParams();
   const { register, setValue, watch } = useForm({
     defaultValues: {
-      guestName: "",
+      customerName: "",
       waiter: "",
       remarks: "",
     },
@@ -46,6 +47,8 @@ const TableDetails = () => {
 
   const { tableDetails, loadingTableDetails, errorTableDetails, fetchTableDetails } =
     useTableStore();
+
+  const {startNewTableOrder, loadCartFromOrder} = useCartStore();
 
   useEffect(() => {
     if (!id) return;
@@ -80,6 +83,11 @@ const TableDetails = () => {
     } else if (status === "Booked") {
       return "Open Table";
     }
+  };
+
+  const handleNewOrder = () => {
+    startNewTableOrder(id, watch("waiter"), watch("customerName"));
+    navigate(`/menu`);
   };
 
   return (
@@ -157,8 +165,9 @@ const TableDetails = () => {
                           <TableCell className="text-right">
                             <Button
                               variant="secondary"
-                              onClick={() =>
-                                navigate(`/menu/?orderId=${order.name}`)
+                              onClick={async () =>{
+                                await loadCartFromOrder(order.name)
+                                navigate(`/menu`)}
                               }
                             >
                               <PenBox />
@@ -193,7 +202,9 @@ const TableDetails = () => {
               </CardContent>
               <CardFooter className="flex justify-end">
                 <div>
-                  <Button onClick={() => navigate("/menu")}>New Order</Button>
+                  <Button 
+                  disabled={watch("waiter") === "" || loadingWaiters}
+                  onClick={handleNewOrder}>New Order</Button>
                 </div>
               </CardFooter>
             </Card>
@@ -211,8 +222,8 @@ const TableDetails = () => {
                 <form>
                   <div className="flex flex-col gap-4">
                     <div className="space-y-4">
-                      <Label>Guest Name</Label>
-                      <Input {...register("guestName")} />
+                      <Label>Customer Name</Label>
+                      <Input {...register("customerName")} />
                     </div>
                     <div className="space-y-4">
                       <Label>Waiter</Label>

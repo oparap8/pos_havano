@@ -1,5 +1,8 @@
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import UpdateCartDialog from "./UpdateCartDialog";
+import Clock from "../HomePage/Clock";
+import { Toaster, toast } from "sonner";
+import { Edit, ShoppingCart, Trash2 } from "lucide-react";
+import { useState } from "react";
 import {
   Card,
   CardFooter,
@@ -7,42 +10,89 @@ import {
   CardTitle,
   CardContent,
 } from "../ui/card";
-import Clock from "../HomePage/Clock";
 import { Button } from "../ui/button";
-import { Edit, ShoppingCart, Trash2 } from "lucide-react";
-import UpdateCartDialog from "./UpdateCartDialog";
 import { useCartStore } from "@/stores/useCartStore";
 import { formatCurrency } from "@/lib/utils";
-import { getOrderItemsWithNames } from "@/api";
-
+import { handleCreateOrder, handleUpdateOrder } from "@/lib/utils";
 
 const Cart = () => {
-  const cart = useCartStore((state) => state.cart);
-  const addToCart = useCartStore((state) => state.addToCart);
-  const removeFromCart = useCartStore((state) => state.removeFromCart);
-  const openUpdateDialog = useCartStore((state) => state.openUpdateDialog);
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const orderId = searchParams.get("orderId") || null;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    cart,
+    removeFromCart,
+    openUpdateDialog,
+    activeOrderId,
+    activeTableId,
+    activeWaiterId,
+    customerName,
+    orderType,
+  } = useCartStore();
 
-  useEffect(() => {
-    if (orderId) {
-      getOrderItemsWithNames(orderId).then((items) => {
-        items.forEach((item) => {
-          addToCart({
-            id: item.id,
-            name: item.name,
-            item_name: item.item_name,
-            quantity: item.quantity,
-            price: item.price,
-            standard_rate: item.price,
-            remark: item.remark,
-          });
-        })
-      });
+  console.log("cart", cart);
+
+  // order = frappe.get_doc("HA Order", payload.get("order_id"))
+  // order.order_items = []
+
+  // for item in payload.get("order_items", []):
+  //     order.append("order_items", {
+  //         "menu_item": item.get("name"),
+  //         "qty": item.get("quantity"),
+  //         "rate": item.get("price"),
+  //         "amount": item.get("price") * item.get("quantity"),
+  //         "preparation_remark": item.get("remark")
+  //     })
+  // order.save()
+  // frappe.db.commit()
+
+  const handleSubmitOrder = async (cart) => {
+    if (!cart || cart.length === 0) {
+      return;
     }
-  }, [orderId, addToCart]);
-  
+    const payload = {
+      order_type: orderType,
+      customer_name: customerName,
+      table: activeTableId,
+      waiter: activeWaiterId,
+      order_items: cart,
+    };
+    try {
+      setIsSubmitting(true);
+      const res = activeOrderId
+        ? await handleUpdateOrder(activeOrderId, payload)
+        : await handleCreateOrder(payload);
+
+      if (res?.success) {
+        toast.success(
+          activeOrderId
+            ? "Order updated successfully!"
+            : "Order created successfully!",
+          {
+            description: activeOrderId
+              ? `Order ID: ${activeOrderId}`
+              : `Order ID: ${res.order_id}`,
+            duration: 4000,
+          }
+        );
+
+        console.log("Order response:", res);
+      } else {
+        toast.error(res?.message || "Something went wrong!", {
+          description:
+            res?.details || "Please check your order details and try again.",
+          duration: 5000,
+        });
+        console.error("Order error:", res);
+      }
+    } catch (err) {
+      toast.error("Server Error", {
+        description: "Unable to reach the server. Please try again later.",
+        duration: 5000,
+      });
+      console.error("Order submission error:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <>
@@ -50,9 +100,9 @@ const Cart = () => {
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <Clock />
-            {orderId ? (
+            {activeOrderId ? (
               <h1 className="text-2xl font-bold text-primary">
-                Order #{orderId}
+                {activeOrderId}
               </h1>
             ) : (
               <h1 className="text-2xl font-bold text-primary">New Order</h1>
@@ -72,7 +122,9 @@ const Cart = () => {
                   <div className="flex gap-4 font-bold">
                     <p>x{item.quantity}</p>
                     <p>{item.item_name || item.name}</p>
-                    <i>{formatCurrency(item.price ?? item.standard_rate ?? 0)}</i>
+                    <i>
+                      {formatCurrency(item.price ?? item.standard_rate ?? 0)}
+                    </i>
                   </div>
                   <div className="flex items-center">
                     <div
@@ -111,12 +163,18 @@ const Cart = () => {
         </CardContent>
         <hr className="border border-gray-600" />
         <CardFooter>
-          <Button size="lg" block>
-            {orderId ? "Update Order" : "Place Order"}
+          <Button
+            onClick={() => handleSubmitOrder(cart)}
+            size="lg"
+            className="w-full"
+            disabled={cart.length === 0 || isSubmitting}
+            title={cart.length === 0 ? "Add items to your cart first" : ""}
+          >
+            {activeOrderId ? "Update Order" : "Place Order"}
           </Button>
         </CardFooter>
       </Card>
-
+      <Toaster richColors duration={4000} position="top-center" />
       <UpdateCartDialog />
     </>
   );
