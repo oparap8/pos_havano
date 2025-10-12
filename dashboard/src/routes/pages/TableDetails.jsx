@@ -150,7 +150,37 @@ const TableDetails = () => {
           "order_items",
         ],
       });
-      setViewOrder(orderDoc);
+      let waiterLabel = orderDoc.waiter || null;
+      if (orderDoc.waiter) {
+        try {
+          const waiterDoc = await db.getDoc("HA Waiter", orderDoc.waiter, {
+            fields: ["name", "waiter_name"],
+          });
+          waiterLabel =
+            waiterDoc.waiter_name || waiterDoc.name || orderDoc.waiter;
+        } catch (err) {
+          console.warn("Failed to fetch waiter info:", err);
+        }
+      }
+
+      let tableLabel = orderDoc.table || null;
+      if (orderDoc.table) {
+        try {
+          const tableDoc = await db.getDoc("HA Table", orderDoc.table, {
+            fields: ["name", "table_number"],
+          });
+          tableLabel =
+            tableDoc.table_number || tableDoc.name || orderDoc.table;
+        } catch (err) {
+          console.warn("Failed to fetch table info:", err);
+        }
+      }
+
+      setViewOrder({
+        ...orderDoc,
+        waiter_display: waiterLabel,
+        table_display: tableLabel,
+      });
     } catch (err) {
       console.error("Order view fetch error:", err);
       setViewOrderError(err?.message || "Failed to load order details.");
@@ -439,8 +469,10 @@ const TableDetails = () => {
                 {[
                   viewOrder.customer_name &&
                     `Customer: ${viewOrder.customer_name}`,
-                  viewOrder.waiter && `Waiter: ${viewOrder.waiter}`,
-                  viewOrder.table && `Table: ${viewOrder.table}`,
+                  viewOrder.waiter_display &&
+                    `Waiter: ${viewOrder.waiter_display}`,
+                  viewOrder.table_display &&
+                    `Table: ${viewOrder.table_display}`,
                 ]
                   .filter(Boolean)
                   .join(" • ")}
