@@ -1,6 +1,6 @@
 import Container from "@/components/Shared/Container";
 import Error from "@/components/Error";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import {
@@ -30,15 +30,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PenBox, Printer } from "lucide-react";
+import { Eye, PenBox, Printer } from "lucide-react";
 import { useWaiterStore } from "@/stores/useWaiterStore";
 import { useOrderStore } from "@/stores/useOrderStore";
 import { useTableStore } from "@/stores/useTableStore";
 import { useCartStore } from "@/stores/useCartStore";
 import { formatCurrency } from "@/lib/utils";
 import Loader from "@/components/Loader";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast, Toaster } from "sonner";
+import { db } from "@/lib/frappeClient";
 
 const TableDetails = () => {
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [viewOrder, setViewOrder] = useState(null);
+  const [viewOrderLoading, setViewOrderLoading] = useState(false);
+  const [viewOrderError, setViewOrderError] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
   const { register, setValue, watch } = useForm({
@@ -106,11 +122,80 @@ const TableDetails = () => {
     navigate(`/menu`);
   };
 
+  const closeViewDialog = () => {
+    setIsViewDialogOpen(false);
+    setSelectedOrderId(null);
+    setViewOrder(null);
+    setViewOrderError(null);
+  };
+
+  const handleViewOrder = async (orderId) => {
+    if (!orderId) {
+      return;
+    }
+    setSelectedOrderId(orderId);
+    setIsViewDialogOpen(true);
+    setViewOrder(null);
+    setViewOrderError(null);
+    setViewOrderLoading(true);
+    try {
+      const orderDoc = await db.getDoc("HA Order", orderId, {
+        fields: [
+          "name",
+          "customer_name",
+          "table",
+          "waiter",
+          "order_type",
+          "total_price",
+          "order_items",
+        ],
+      });
+      setViewOrder(orderDoc);
+    } catch (err) {
+      console.error("Order view fetch error:", err);
+      setViewOrderError(err?.message || "Failed to load order details.");
+    } finally {
+      setViewOrderLoading(false);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!orderId || isDeleting) {
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      await db.deleteDoc("HA Order", orderId);
+      toast.success("Order deleted", {
+        description: `Order ID: ${orderId}`,
+        duration: 4000,
+      });
+      closeViewDialog();
+      if (id) {
+        await fetchTableOrders(id);
+      }
+    } catch (err) {
+      console.error("Order delete error:", err);
+      toast.error("Unable to delete order", {
+        description: err?.message || "Please try again later.",
+        duration: 5000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleEditOrder = async (orderId) => {
+    if (!orderId) {
+      return;
+    }
+    if (isViewDialogOpen) {
+      closeViewDialog();
+    }
     await loadCartFromOrder(orderId);
     startTableOrder(id, watch("waiter"), orderId, watch("customerName"));
     navigate(`/menu`);
-  }
+  };
 
   if (errorTableDetails) {
     return <Error message={errorTableDetails} />;
@@ -122,6 +207,7 @@ const TableDetails = () => {
 
   return (
     <Container>
+      <Toaster richColors duration={4000} position="top-center" />
       <div>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-primary my-4">
@@ -195,11 +281,19 @@ const TableDetails = () => {
                           <TableCell className="text-right">
                             <Button
                               variant="secondary"
+                              onClick={() => handleViewOrder(order.name)}
+                            >
+                              <Eye />
+                              View
+                            </Button>
+                            {/* <Button
+                              variant="secondary"
+                              className="ml-2"
                               onClick={() => handleEditOrder(order.name)}
                             >
                               <PenBox />
                               Edit
-                            </Button>
+                            </Button> */}
                             <Button variant="secondary" className="ml-2 ">
                               <Printer />
                               Print
@@ -327,6 +421,102 @@ const TableDetails = () => {
           </div>
         </div>
       </div>
+      <Dialog
+        open={isViewDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeViewDialog();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {selectedOrderId ? `Order ${selectedOrderId}` : "Order Details"}
+            </DialogTitle>
+            {viewOrder && (
+              <DialogDescription>
+                {[
+                  viewOrder.customer_name &&
+                    `Customer: ${viewOrder.customer_name}`,
+                  viewOrder.waiter && `Waiter: ${viewOrder.waiter}`,
+                  viewOrder.table && `Table: ${viewOrder.table}`,
+                ]
+                  .filter(Boolean)
+                  .join(" • ")}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {viewOrderLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader />
+            </div>
+          ) : viewOrderError ? (
+            <p className="text-sm text-red-500">{viewOrderError}</p>
+          ) : viewOrder ? (
+            <div className="space-y-4">
+              <div className="border rounded-md p-3 max-h-60 overflow-y-auto">
+                {viewOrder.order_items && viewOrder.order_items.length > 0 ? (
+                  <ul className="space-y-3">
+                    {viewOrder.order_items.map((item) => (
+                      <li
+                        key={item.name}
+                        className="flex justify-between items-start text-sm"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {item.menu_item_name || item.menu_item}
+                          </span>
+                          {item.preparation_remark && (
+                            <span className="text-muted-foreground text-xs">
+                              Note: {item.preparation_remark}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span className="block">
+                            Qty: {item.qty ?? item.quantity ?? 0}
+                          </span>
+                          <span className="block">
+                            {formatCurrency(item.rate ?? 0)}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No items for this order.
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-between text-sm font-semibold">
+                <span>Total</span>
+                <span>{formatCurrency(viewOrder.total_price ?? 0)}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Select an order to view its details.
+            </p>
+          )}
+          <DialogFooter>
+            <Button
+              variant="destructive"
+              onClick={() => handleDeleteOrder(selectedOrderId)}
+              disabled={isDeleting || !selectedOrderId}
+            >
+              Delete
+            </Button>
+            <Button
+              onClick={() => handleEditOrder(selectedOrderId)}
+              disabled={!selectedOrderId}
+            >
+              Edit Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Container>
   );
 };
