@@ -1,8 +1,9 @@
-import UpdateCartDialog from "./UpdateCartDialog";
-import Clock from "../HomePage/Clock";
+import { useNavigate } from "react-router-dom";
 import { Toaster, toast } from "sonner";
 import { Edit, ShoppingCart, Trash2 } from "lucide-react";
 import { useState } from "react";
+import UpdateCartDialog from "./UpdateCartDialog";
+import Clock from "../HomePage/Clock";
 import {
   Card,
   CardFooter,
@@ -17,6 +18,7 @@ import { handleCreateOrder, handleUpdateOrder } from "@/lib/utils";
 
 const Cart = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
   const {
     cart,
     removeFromCart,
@@ -26,24 +28,11 @@ const Cart = () => {
     activeWaiterId,
     customerName,
     orderType,
+    clearCart,
   } = useCartStore();
 
   console.log("cart", cart);
   console.log("activeOrderId", activeOrderId);
-
-  // order = frappe.get_doc("HA Order", payload.get("order_id"))
-  // order.order_items = []
-
-  // for item in payload.get("order_items", []):
-  //     order.append("order_items", {
-  //         "menu_item": item.get("name"),
-  //         "qty": item.get("quantity"),
-  //         "rate": item.get("price"),
-  //         "amount": item.get("price") * item.get("quantity"),
-  //         "preparation_remark": item.get("remark")
-  //     })
-  // order.save()
-  // frappe.db.commit()
 
   const handleSubmitOrder = async (cart) => {
     if (!cart || cart.length === 0) {
@@ -63,24 +52,45 @@ const Cart = () => {
         ? await handleUpdateOrder(payload)
         : await handleCreateOrder(payload);
 
-      if (res?.success) {
-        toast.success(
-          activeOrderId
+      const {
+        success,
+        message: apiMessage,
+        order_id: createdOrderId,
+        details,
+      } = res || {};
+
+      if (success) {
+        const successTitle =
+          typeof apiMessage === "string"
+            ? apiMessage
+            : activeOrderId
             ? "Order updated successfully!"
-            : "Order created successfully!",
-          {
-            description: activeOrderId
-              ? `Order ID: ${activeOrderId}`
-              : `Order ID: ${res.order_id}`,
-            duration: 4000,
-          }
-        );
+            : "Order created successfully!";
+        const orderIdentifier = activeOrderId || createdOrderId;
+
+        toast.success(successTitle, {
+          description: orderIdentifier
+            ? `Order ID: ${orderIdentifier}`
+            : undefined,
+          duration: 4000,
+        });
 
         console.log("Order response:", res);
+
+        clearCart();
+        if (activeTableId) navigate(`/tables/${activeTableId}`);
       } else {
-        toast.error(res?.message || "Something went wrong!", {
-          description:
-            res?.details || "Please check your order details and try again.",
+        const errorTitle =
+          typeof apiMessage === "string"
+            ? apiMessage
+            : "Something went wrong!";
+        const errorDescription =
+          typeof details === "string"
+            ? details
+            : "Please check your order details and try again.";
+
+        toast.error(errorTitle, {
+          description: errorDescription,
           duration: 5000,
         });
         console.error("Order error:", res);

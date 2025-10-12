@@ -104,14 +104,6 @@ export const useCartStore = create((set, get) => ({
       ],
     });
 
-    // custom_menu_category: "Dessert";
-    // item_name: "Pizza";
-    // name: "MU-03";
-    // price: 10000;
-    // quantity: 1;
-    // remark: "";
-    // standard_rate: 10000;
-
     set({
       cart: order.order_items.map((item) => ({
         name: item.menu_item,

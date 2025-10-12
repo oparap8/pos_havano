@@ -13,9 +13,11 @@ import { Button } from "@/components/ui/button";
 import { useMenuStore } from "@/stores/useMenuStore";
 import { useEffect, useState } from "react";
 import { formatCurrency, getCurrentUserFullName } from "@/lib/utils";
+import { useCartStore } from "@/stores/useCartStore";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { startNewTakeAwayOrder } = useCartStore();
   const {
     menuItems,
     fetchMenuItems,
@@ -67,7 +69,9 @@ const Home = () => {
               <Button
                 variant="secondary"
                 size="lg"
-                onClick={() => navigate("/menu")}
+                onClick={() => {
+                  startNewTakeAwayOrder();
+                  navigate("/menu")}}
                 className="border-primary/30 shadow-sm hover:shadow-md"
               >
                 TAKE AWAY
