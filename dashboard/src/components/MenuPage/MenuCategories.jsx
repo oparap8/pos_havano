@@ -94,7 +94,7 @@ const MenuCategories = () => {
   return (
     <>
       <Drawer>
-        <DrawerTrigger className="flex gap-2 items-center text-secondary text-lg pb-[2px] hover:pb-0 hover:border-b-2 hover:border-secondary cursor-pointer">
+        <DrawerTrigger className="flex gap-2 items-center text-primary text-lg pb-[2px] hover:pb-0 hover:border-b-2 hover:border-primary cursor-pointer">
           View Categories
           <ChevronsRight />
         </DrawerTrigger>

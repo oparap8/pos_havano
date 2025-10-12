@@ -147,7 +147,7 @@ const TableDetails = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Table className="px-4">
+                <Table className="px-4" maxHeight="36rem">
                   <TableHeader>
                     <TableRow className="h-10 font-bold">
                       <TableHead className="text-xl font-bold">

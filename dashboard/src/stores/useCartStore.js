@@ -116,7 +116,13 @@ export const useCartStore = create((set, get) => ({
     });
   },
 
-  setSelectedCategory: (category) => set({ selectedCategory: category }),
+  setSelectedCategory: (category) =>
+    set((state) => ({
+      selectedCategory:
+        typeof category === "function"
+          ? category(state.selectedCategory)
+          : category,
+    })),
 
   openUpdateDialog: (item) => {
     if (!item?.name) {
