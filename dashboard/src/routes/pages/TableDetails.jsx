@@ -11,12 +11,24 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PenBox, Printer } from "lucide-react";
 import { useWaiterStore } from "@/stores/useWaiterStore";
@@ -24,6 +36,7 @@ import { useOrderStore } from "@/stores/useOrderStore";
 import { useTableStore } from "@/stores/useTableStore";
 import { useCartStore } from "@/stores/useCartStore";
 import { formatCurrency } from "@/lib/utils";
+import Loader from "@/components/Loader";
 
 const TableDetails = () => {
   const navigate = useNavigate();
@@ -45,10 +58,14 @@ const TableDetails = () => {
     fetchTableOrders,
   } = useOrderStore();
 
-  const { tableDetails, loadingTableDetails, errorTableDetails, fetchTableDetails } =
-    useTableStore();
+  const {
+    tableDetails,
+    loadingTableDetails,
+    errorTableDetails,
+    fetchTableDetails,
+  } = useTableStore();
 
-  const {startNewTableOrder, loadCartFromOrder} = useCartStore();
+  const { startTableOrder, loadCartFromOrder } = useCartStore();
 
   useEffect(() => {
     if (!id) return;
@@ -74,7 +91,6 @@ const TableDetails = () => {
     }
   }, [tableOrders, setValue]);
 
-
   const submitText = (status) => {
     if (status === "Available") {
       return "Assign Table";
@@ -86,9 +102,23 @@ const TableDetails = () => {
   };
 
   const handleNewOrder = () => {
-    startNewTableOrder(id, watch("waiter"), watch("customerName"));
+    startTableOrder(id, watch("waiter"), null, watch("customerName"));
     navigate(`/menu`);
   };
+
+  const handleEditOrder = async (orderId) => {
+    await loadCartFromOrder(orderId);
+    startTableOrder(id, watch("waiter"), orderId, watch("customerName"));
+    navigate(`/menu`);
+  }
+
+  if (errorTableDetails) {
+    return <Error message={errorTableDetails} />;
+  }
+
+  if (loadingTableDetails) {
+    return <Loader />;
+  }
 
   return (
     <Container>
@@ -165,10 +195,7 @@ const TableDetails = () => {
                           <TableCell className="text-right">
                             <Button
                               variant="secondary"
-                              onClick={async () =>{
-                                await loadCartFromOrder(order.name)
-                                navigate(`/menu`)}
-                              }
+                              onClick={() => handleEditOrder(order.name)}
                             >
                               <PenBox />
                               Edit
@@ -202,9 +229,12 @@ const TableDetails = () => {
               </CardContent>
               <CardFooter className="flex justify-end">
                 <div>
-                  <Button 
-                  disabled={watch("waiter") === "" || loadingWaiters}
-                  onClick={handleNewOrder}>New Order</Button>
+                  <Button
+                    disabled={watch("waiter") === "" || loadingWaiters}
+                    onClick={handleNewOrder}
+                  >
+                    New Order
+                  </Button>
                 </div>
               </CardFooter>
             </Card>

@@ -12,16 +12,21 @@ export const useCartStore = create((set, get) => ({
   selectedCartItem: null,
   isUpdateDialogOpen: false,
 
-
   addToCart: (item) =>
     set((state) => {
       const identifier = item.name;
       if (!identifier) {
-        console.warn("Attempted to add cart item without a name identifier.", item);
+        console.warn(
+          "Attempted to add cart item without a name identifier.",
+          item
+        );
         return {};
       }
-      const existing = state.cart.find((cartItem) => cartItem.name === identifier);
-      const resolvedPrice = item.standard_rate ?? 0;
+
+      const existing = state.cart.find(
+        (cartItem) => cartItem.name === identifier
+      );
+      const resolvedPrice = item.price ?? item.standard_rate ?? 0;
 
       if (existing) {
         return {
@@ -30,7 +35,8 @@ export const useCartStore = create((set, get) => ({
               ? {
                   ...cartItem,
                   quantity: cartItem.quantity + 1,
-                  price: resolvedPrice,
+                  price: cartItem.price ?? resolvedPrice,
+                  standard_rate: cartItem.standard_rate ?? resolvedPrice,
                 }
               : cartItem
           ),
@@ -42,8 +48,9 @@ export const useCartStore = create((set, get) => ({
           ...state.cart,
           {
             ...item,
-            quantity: 1,
+            quantity: item.quantity ?? 1,
             price: resolvedPrice,
+            standard_rate: item.standard_rate ?? resolvedPrice,
           },
         ],
       };
@@ -52,7 +59,10 @@ export const useCartStore = create((set, get) => ({
   updateCartItem: (updatedItem) =>
     set((state) => {
       if (!updatedItem?.name) {
-        console.warn("Attempted to update cart item without a name identifier.", updatedItem);
+        console.warn(
+          "Attempted to update cart item without a name identifier.",
+          updatedItem
+        );
         return {};
       }
       return {
@@ -67,11 +77,16 @@ export const useCartStore = create((set, get) => ({
   removeFromCart: (itemToRemove) =>
     set((state) => {
       if (!itemToRemove?.name) {
-        console.warn("Attempted to remove cart item without a name identifier.", itemToRemove);
+        console.warn(
+          "Attempted to remove cart item without a name identifier.",
+          itemToRemove
+        );
         return {};
       }
       return {
-        cart: state.cart.filter((cartItem) => cartItem.name !== itemToRemove.name),
+        cart: state.cart.filter(
+          (cartItem) => cartItem.name !== itemToRemove.name
+        ),
       };
     }),
 
@@ -89,13 +104,13 @@ export const useCartStore = create((set, get) => ({
       ],
     });
 
-// custom_menu_category: "Dessert";
-// item_name: "Pizza";
-// name: "MU-03";
-// price: 10000;
-// quantity: 1;
-// remark: "";
-// standard_rate: 10000;
+    // custom_menu_category: "Dessert";
+    // item_name: "Pizza";
+    // name: "MU-03";
+    // price: 10000;
+    // quantity: 1;
+    // remark: "";
+    // standard_rate: 10000;
 
     set({
       cart: order.order_items.map((item) => ({
@@ -103,17 +118,20 @@ export const useCartStore = create((set, get) => ({
         item_name: item.menu_item_name,
         quantity: item.qty,
         price: item.rate ?? 0,
+        standard_rate: item.rate ?? 0,
         remark: item.preparation_remark ?? "",
       })),
     });
   },
-    
 
   setSelectedCategory: (category) => set({ selectedCategory: category }),
 
   openUpdateDialog: (item) => {
     if (!item?.name) {
-      console.warn("Attempted to open update dialog without a name identifier.", item);
+      console.warn(
+        "Attempted to open update dialog without a name identifier.",
+        item
+      );
       return;
     }
     set({
@@ -128,23 +146,23 @@ export const useCartStore = create((set, get) => ({
       isUpdateDialogOpen: false,
     }),
 
-    startNewTableOrder: (tableId, waiterId, customerName = "") => {
-      set({
-        orderType: "Dine In",
-        activeTableId: tableId,
-        activeWaiterId: waiterId,
-        activeOrderId: null,
-        customerName,
-      });
-    },
+  startTableOrder: (tableId, waiterId, activeOrderId = null, customerName = "") => {
+    set({
+      orderType: "Dine In",
+      activeTableId: tableId,
+      activeWaiterId: waiterId,
+      activeOrderId: activeOrderId,
+      customerName,
+    });
+  },
 
-    startNewTakeAwayOrder: () => {
-      set({
-        orderType: "Take Away",
-        activeTableId: null,
-        activeWaiterId: null,
-        activeOrderId: null,
-        customerName: "",
-      });
-    }
+  startNewTakeAwayOrder: () => {
+    set({
+      orderType: "Take Away",
+      activeTableId: null,
+      activeWaiterId: null,
+      activeOrderId: null,
+      customerName: "",
+    });
+  },
 }));

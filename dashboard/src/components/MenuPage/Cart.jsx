@@ -29,6 +29,7 @@ const Cart = () => {
   } = useCartStore();
 
   console.log("cart", cart);
+  console.log("activeOrderId", activeOrderId);
 
   // order = frappe.get_doc("HA Order", payload.get("order_id"))
   // order.order_items = []
@@ -49,6 +50,7 @@ const Cart = () => {
       return;
     }
     const payload = {
+      order_id: activeOrderId,
       order_type: orderType,
       customer_name: customerName,
       table: activeTableId,
@@ -58,7 +60,7 @@ const Cart = () => {
     try {
       setIsSubmitting(true);
       const res = activeOrderId
-        ? await handleUpdateOrder(activeOrderId, payload)
+        ? await handleUpdateOrder(payload)
         : await handleCreateOrder(payload);
 
       if (res?.success) {
