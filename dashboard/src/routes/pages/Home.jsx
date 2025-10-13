@@ -12,7 +12,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useMenuStore } from "@/stores/useMenuStore";
 import { useEffect, useState } from "react";
-import { formatCurrency, getCurrentUserFullName } from "@/lib/utils";
+import {
+  formatCurrency,
+  getCurrentUserFullName,
+  getNumberOfOrders,
+} from "@/lib/utils";
 import { useCartStore } from "@/stores/useCartStore";
 
 const Home = () => {
@@ -25,6 +29,7 @@ const Home = () => {
     error: menuError,
   } = useMenuStore();
   const [userName, setUserName] = useState(null);
+  const [popularItems, setPopularItems] = useState([]);
 
 
   useEffect(() => {
@@ -45,6 +50,47 @@ const Home = () => {
 
     loadUserName();
   }, []);
+
+  useEffect(() => {
+    if (!menuItems || menuItems.length === 0) {
+      setPopularItems([]);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadPopularItems = async () => {
+      try {
+        const entries = await Promise.all(
+          menuItems.map(async (item) => {
+            try {
+              const count = await getNumberOfOrders(item.name);
+              return { ...item, orderCount: count };
+            } catch (err) {
+              console.error("Failed to fetch order count:", err);
+              return { ...item, orderCount: 0 };
+            }
+          })
+        );
+
+        const sorted = entries.sort(
+          (a, b) => (b.orderCount ?? 0) - (a.orderCount ?? 0)
+        );
+
+        if (!isCancelled) {
+          setPopularItems(sorted.slice(0, 10));
+        }
+      } catch (err) {
+        console.error("Failed to load order counts:", err);
+      }
+    };
+
+    loadPopularItems();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [menuItems]);
 
   return (
     <div className="bg-secondary-background">
@@ -97,7 +143,7 @@ const Home = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {menuItems.slice(0, 10).map((item, index) => (
+                  {popularItems.map((item, index) => (
                     <div
                       key={item.name}
                       className="flex items-center justify-between bg-secondary-background rounded-md py-2 px-4"
@@ -110,9 +156,9 @@ const Home = () => {
                         </div>
                         <div>
                           <p>{item.item_name}</p>
-                          {/* <p className="text-xs text-gray-500">
-                              Orders: {item.orders}
-                            </p> */}
+                          <p className="text-xs text-gray-500">
+                            Orders: {item.orderCount ?? 0}
+                          </p>
                         </div>
                       </div>
                       <p>{formatCurrency(item.standard_rate)}</p>
