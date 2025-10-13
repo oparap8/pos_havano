@@ -15,10 +15,13 @@ import { Button } from "../ui/button";
 import { useCartStore } from "@/stores/useCartStore";
 import { formatCurrency } from "@/lib/utils";
 import { handleCreateOrder, handleUpdateOrder } from "@/lib/utils";
+import { useOrderStore } from "@/stores/useOrderStore";
 
 const Cart = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const fetchOrders = useOrderStore((state) => state.fetchOrders);
+  const fetchTableOrders = useOrderStore((state) => state.fetchTableOrders);
   const {
     cart,
     removeFromCart,
@@ -76,6 +79,15 @@ const Cart = () => {
         });
 
         console.log("Order response:", res);
+
+        try {
+          await fetchOrders();
+          if (activeTableId) {
+            await fetchTableOrders(activeTableId);
+          }
+        } catch (refreshErr) {
+          console.error("Failed to refresh orders:", refreshErr);
+        }
 
         clearCart();
         if (activeTableId) navigate(`/tables/${activeTableId}`);

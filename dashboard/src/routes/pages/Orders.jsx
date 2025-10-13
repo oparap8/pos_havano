@@ -16,9 +16,9 @@ import OrderDetailsDialog from "@/components/Shared/OrderDetailsDialog";
 const Orders = () => {
   const { orders, loading: orderLoading, error: orderError, fetchOrders } =
     useOrderStore();
-  const [filter, setFilter] = useState("All");
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  console.log(orders);
 
   useEffect(() => {
     fetchOrders();
@@ -37,6 +37,10 @@ const Orders = () => {
       <Container>
         <div className="flex items-center justify-between py-4">
           <h1 className="text-2xl font-bold text-primary">Orders</h1>
+          <div className="flex items-center gap-4">
+            <p>Filter by waiter</p>
+            <p>Filter by status</p>
+          </div>
         </div>
         <div className="grid grid-cols-5 gap-4">
           {orders

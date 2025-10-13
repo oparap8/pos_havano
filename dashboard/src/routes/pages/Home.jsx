@@ -21,7 +21,7 @@ import { useCartStore } from "@/stores/useCartStore";
 
 const Home = () => {
   const navigate = useNavigate();
-  const { startNewTakeAwayOrder } = useCartStore();
+  const { startNewTakeAwayOrder, addToCart, clearCart } = useCartStore();
   const {
     menuItems,
     fetchMenuItems,
@@ -92,6 +92,26 @@ const Home = () => {
     };
   }, [menuItems]);
 
+  const handlePopularItemClick = (item) => {
+    if (!item?.name) {
+      return;
+    }
+
+    startNewTakeAwayOrder();
+    clearCart();
+    addToCart({
+      ...item,
+      quantity: 1,
+      price: item.price ?? item.standard_rate ?? 0,
+      standard_rate: item.standard_rate ?? item.price ?? 0,
+    });
+    navigate("/menu");
+  };
+
+  const noOrdersYet =
+    popularItems.length > 0 &&
+    popularItems.every((item) => (item.orderCount ?? 0) === 0);
+
   return (
     <div className="bg-secondary-background">
       <Container>
@@ -136,34 +156,52 @@ const Home = () => {
               <CardHeader className="flex items-center justify-between">
                 <CardTitle>Popular Menu Items</CardTitle>
                 <CardAction>
-                  <Button variant="link" onClick={() => navigate("/menu")}>
+                  <Button variant="link" onClick={() => {clearCart(); navigate("/menu")}}>
                     View All
                   </Button>
                 </CardAction>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {popularItems.map((item, index) => (
-                    <div
-                      key={item.name}
-                      className="flex items-center justify-between bg-secondary-background rounded-md py-2 px-4"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center">
-                          <p className="text-lg font-bold text-white">
-                            {index + 1}
-                          </p>
+                  {popularItems.length === 0 ? (
+                    <p className="text-sm text-gray-500">
+                      No menu items available yet.
+                    </p>
+                  ) : (
+                    <>
+                      {noOrdersYet && (
+                        <div className="text-xs text-gray-400 bg-secondary-background/70 border border-dashed border-gray-600 rounded-md p-3">
+                          No orders have been placed yet. Click a menu item below
+                          to start an order with it pre-filled in your cart.
                         </div>
-                        <div>
-                          <p>{item.item_name}</p>
-                          <p className="text-xs text-gray-500">
-                            Orders: {item.orderCount ?? 0}
+                      )}
+                      {popularItems.map((item, index) => (
+                        <button
+                          key={item.name}
+                          type="button"
+                          onClick={() => handlePopularItemClick(item)}
+                          className="w-full flex items-center justify-between bg-secondary-background rounded-md py-2 px-4 transition hover:bg-secondary-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:cursor-pointer"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="p-2 h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center">
+                              <p className="text-lg font-bold text-white">
+                                {index + 1}
+                              </p>
+                            </div>
+                            <div className="text-left">
+                              <p className="font-medium">{item.item_name}</p>
+                              <p className="text-xs text-gray-500">
+                                Orders: {item.orderCount ?? 0}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="font-semibold">
+                            {formatCurrency(item.standard_rate)}
                           </p>
-                        </div>
-                      </div>
-                      <p>{formatCurrency(item.standard_rate)}</p>
-                    </div>
-                  ))}
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>

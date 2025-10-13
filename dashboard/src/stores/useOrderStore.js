@@ -10,6 +10,7 @@ export const useOrderStore = create((set, get) => ({
   tableOrdersError: null,
 
   fetchOrders: async () => {
+    console.log("fetching orders");
     set({ loading: true, error: null });
     try {
       // fetch all orders
@@ -22,6 +23,12 @@ export const useOrderStore = create((set, get) => ({
           "waiter",
           "creation",
         ],
+        orderBy: {
+          field: "creation",
+          order: "desc",
+        },
+        // ensure we always get fresh data
+        cache: false,
       });
 
       // fetch all tables
@@ -51,7 +58,7 @@ export const useOrderStore = create((set, get) => ({
         waiter_name: waiterMap[order.waiter] || null,
       }));
 
-      set({ orders: merged, loading: false });
+      set({ orders: [...merged], loading: false });
     } catch (err) {
       console.error("Fetch error:", err);
       set({ error: err.message, loading: false });
