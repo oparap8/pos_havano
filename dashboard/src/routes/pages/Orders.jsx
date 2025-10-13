@@ -11,10 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import Error from "@/components/Error";
 import Loader from "@/components/Loader";
+import OrderDetailsDialog from "@/components/Shared/OrderDetailsDialog";
 
 const Orders = () => {
-  const { orders, loading: orderLoading, error: orderError, fetchOrders } = useOrderStore();
+  const { orders, loading: orderLoading, error: orderError, fetchOrders } =
+    useOrderStore();
   const [filter, setFilter] = useState("All");
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -36,9 +40,16 @@ const Orders = () => {
         </div>
         <div className="grid grid-cols-5 gap-4">
           {orders
-            .filter((order) => order.payment_status !== "Paid")
+            .filter((order) => order.payment_status === "Unpaid")
             .map((order) => (
-                <Card>
+                <Card
+                  key={order.name}
+                  className="cursor-pointer transition hover:shadow-lg"
+                  onClick={() => {
+                    setSelectedOrderId(order.name);
+                    setIsDialogOpen(true);
+                  }}
+                >
                   <CardHeader className="flex justify-between items-center">
                     <p>
                       {`${order.name} ${
@@ -65,6 +76,21 @@ const Orders = () => {
             ))}
         </div>
       </Container>
+      <OrderDetailsDialog
+        open={isDialogOpen}
+        orderId={selectedOrderId}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setSelectedOrderId(null);
+        }}
+        onEdit={(orderId) => {
+          setIsDialogOpen(false);
+          setSelectedOrderId(null);
+        }}
+        onDeleted={async () => {
+          await fetchOrders();
+        }}
+      />
     </>
   );
 };
