@@ -408,7 +408,9 @@ const TableDetails = () => {
               <CardFooter className="flex justify-end">
                 <div>
                   <Button
-                    disabled={watch("waiter") === "" || loadingWaiters}
+                    disabled={
+                      tableDetails.status !== "Occupied" || loadingWaiters
+                    }
                     onClick={handleNewOrder}
                   >
                     New Order
@@ -441,6 +443,7 @@ const TableDetails = () => {
                           setValue("waiter", value, { shouldValidate: true })
                         }
                         disabled={loadingWaiters}
+                        readonly={tableDetails.status !== "Occupied"}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select waiter" />
@@ -484,7 +487,9 @@ const TableDetails = () => {
                           isTableStatusUpdating
                         }
                       >
-                        {tableDetails ? submitText(tableDetails.status) : "Assign Table"}
+                        {tableDetails
+                          ? submitText(tableDetails.status)
+                          : "Assign Table"}
                       </Button>
                       {tableDetails?.status === "Booked" && (
                         <Button className="bg-gray-300 text-black" block>
