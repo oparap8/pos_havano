@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
-import { Link } from "react-router-dom";
 import Error from "@/components/Error";
 import Loader from "@/components/Loader";
 
@@ -39,7 +38,6 @@ const Orders = () => {
           {orders
             .filter((order) => order.payment_status !== "Paid")
             .map((order) => (
-              <Link to={`/menu/?orderId=${order.name}`} key={order.name}>
                 <Card>
                   <CardHeader className="flex justify-between items-center">
                     <p>
@@ -49,21 +47,21 @@ const Orders = () => {
                           : ""
                       }`}
                     </p>
-                    {order.payment_status && <Badge variant={order.payment_status.toLowerCase()}>
-                      {order.payment_status}
-                    </Badge>}
+                    {order.payment_status && (
+                      <Badge variant={order.payment_status.toLowerCase()}>
+                        {order.payment_status}
+                      </Badge>
+                    )}
                   </CardHeader>
-                  {/* <CardContent className="flex justify-between items-center text-gray-500 text-sm">
-                    <p>{formatDateTime(order.orderDateTime)}</p>
-                    <p>{order.itemCount} items</p>
-                  </CardContent> */}
+                  <CardContent className=" text-gray-500 text-sm">
+                    <p>{formatDateTime(order.creation)}</p>
+                  </CardContent>
                   <hr className="border border-gray-600" />
                   <CardFooter className="flex justify-between items-center font-bold">
                     <p>Total</p>
                     <p>{formatCurrency(order.total_price)}</p>
                   </CardFooter>
                 </Card>
-              </Link>
             ))}
         </div>
       </Container>

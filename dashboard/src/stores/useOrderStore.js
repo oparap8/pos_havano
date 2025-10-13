@@ -14,7 +14,14 @@ export const useOrderStore = create((set, get) => ({
     try {
       // fetch all orders
       const orders = await db.getDocList("HA Order", {
-        fields: ["name", "table", "payment_status", "total_price", "waiter"],
+        fields: [
+          "name",
+          "table",
+          "payment_status",
+          "total_price",
+          "waiter",
+          "creation",
+        ],
       });
 
       // fetch all tables

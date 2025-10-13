@@ -37,24 +37,13 @@ import { useTableStore } from "@/stores/useTableStore";
 import { useCartStore } from "@/stores/useCartStore";
 import { formatCurrency } from "@/lib/utils";
 import Loader from "@/components/Loader";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { toast, Toaster } from "sonner";
 import { db } from "@/lib/frappeClient";
+import OrderDetailsDialog from "@/components/Shared/OrderDetailsDialog";
 
 const TableDetails = () => {
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [viewOrder, setViewOrder] = useState(null);
-  const [viewOrderLoading, setViewOrderLoading] = useState(false);
-  const [viewOrderError, setViewOrderError] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isTableStatusUpdating, setIsTableStatusUpdating] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
@@ -82,7 +71,7 @@ const TableDetails = () => {
     fetchTableDetails,
   } = useTableStore();
 
-  const { startTableOrder, loadCartFromOrder } = useCartStore();
+  const { startTableOrder, loadCartFromOrder, clearCart } = useCartStore();
 
   useEffect(() => {
     if (!id) return;
@@ -119,109 +108,22 @@ const TableDetails = () => {
   };
 
   const handleNewOrder = () => {
+    clearCart();
     startTableOrder(id, watch("waiter"), null, watch("customerName"));
     navigate(`/menu`);
   };
 
-  const closeViewDialog = () => {
-    setIsViewDialogOpen(false);
-    setSelectedOrderId(null);
-    setViewOrder(null);
-    setViewOrderError(null);
-  };
-
-  const handleViewOrder = async (orderId) => {
+  const handleViewOrder = (orderId) => {
     if (!orderId) {
       return;
     }
     setSelectedOrderId(orderId);
-    setIsViewDialogOpen(true);
-    setViewOrder(null);
-    setViewOrderError(null);
-    setViewOrderLoading(true);
-    try {
-      const orderDoc = await db.getDoc("HA Order", orderId, {
-        fields: [
-          "name",
-          "customer_name",
-          "table",
-          "waiter",
-          "order_type",
-          "total_price",
-          "order_items",
-        ],
-      });
-      let waiterLabel = orderDoc.waiter || null;
-      if (orderDoc.waiter) {
-        try {
-          const waiterDoc = await db.getDoc("HA Waiter", orderDoc.waiter, {
-            fields: ["name", "waiter_name"],
-          });
-          waiterLabel =
-            waiterDoc.waiter_name || waiterDoc.name || orderDoc.waiter;
-        } catch (err) {
-          console.warn("Failed to fetch waiter info:", err);
-        }
-      }
-
-      let tableLabel = orderDoc.table || null;
-      if (orderDoc.table) {
-        try {
-          const tableDoc = await db.getDoc("HA Table", orderDoc.table, {
-            fields: ["name", "table_number"],
-          });
-          tableLabel =
-            tableDoc.table_number || tableDoc.name || orderDoc.table;
-        } catch (err) {
-          console.warn("Failed to fetch table info:", err);
-        }
-      }
-
-      setViewOrder({
-        ...orderDoc,
-        waiter_display: waiterLabel,
-        table_display: tableLabel,
-      });
-    } catch (err) {
-      console.error("Order view fetch error:", err);
-      setViewOrderError(err?.message || "Failed to load order details.");
-    } finally {
-      setViewOrderLoading(false);
-    }
-  };
-
-  const handleDeleteOrder = async (orderId) => {
-    if (!orderId || isDeleting) {
-      return;
-    }
-    setIsDeleting(true);
-    try {
-      await db.deleteDoc("HA Order", orderId);
-      toast.success("Order deleted", {
-        description: `Order ID: ${orderId}`,
-        duration: 4000,
-      });
-      closeViewDialog();
-      if (id) {
-        await fetchTableOrders(id);
-      }
-    } catch (err) {
-      console.error("Order delete error:", err);
-      toast.error("Unable to delete order", {
-        description: err?.message || "Please try again later.",
-        duration: 5000,
-      });
-    } finally {
-      setIsDeleting(false);
-    }
+    setIsOrderDialogOpen(true);
   };
 
   const handleEditOrder = async (orderId) => {
     if (!orderId) {
       return;
-    }
-    if (isViewDialogOpen) {
-      closeViewDialog();
     }
     await loadCartFromOrder(orderId);
     startTableOrder(id, watch("waiter"), orderId, watch("customerName"));
@@ -267,27 +169,6 @@ const TableDetails = () => {
       setIsTableStatusUpdating(false);
     }
   };
-
-  const dialogDescription = (() => {
-    if (viewOrder) {
-      const parts = [
-        viewOrder.customer_name &&
-          `Customer: ${viewOrder.customer_name}`,
-        viewOrder.waiter_display &&
-          `Waiter: ${viewOrder.waiter_display}`,
-        viewOrder.table_display &&
-          `Table: ${viewOrder.table_display}`,
-      ].filter(Boolean);
-      return parts.length ? parts.join(" • ") : "Order details";
-    }
-    if (viewOrderLoading) {
-      return "Loading order details...";
-    }
-    if (viewOrderError) {
-      return "Unable to load order details.";
-    }
-    return "Select an order to view its details.";
-  })();
 
   if (errorTableDetails) {
     return <Error message={errorTableDetails} />;
@@ -513,91 +394,21 @@ const TableDetails = () => {
           </div>
         </div>
       </div>
-      <Dialog
-        open={isViewDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeViewDialog();
-          }
+      <OrderDetailsDialog
+        open={isOrderDialogOpen}
+        orderId={selectedOrderId}
+        onClose={() => {
+          setIsOrderDialogOpen(false);
+          setSelectedOrderId(null);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {selectedOrderId ? `Order ${selectedOrderId}` : "Order Details"}
-            </DialogTitle>
-            <DialogDescription>{dialogDescription}</DialogDescription>
-          </DialogHeader>
-          {viewOrderLoading ? (
-            <div className="flex justify-center py-6">
-              <Loader />
-            </div>
-          ) : viewOrderError ? (
-            <p className="text-sm text-red-500">{viewOrderError}</p>
-          ) : viewOrder ? (
-            <div className="space-y-4">
-              <div className="border rounded-md p-3 max-h-60 overflow-y-auto">
-                {viewOrder.order_items && viewOrder.order_items.length > 0 ? (
-                  <ul className="space-y-3">
-                    {viewOrder.order_items.map((item) => (
-                      <li
-                        key={item.name}
-                        className="flex justify-between items-start text-sm"
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {item.menu_item_name || item.menu_item}
-                          </span>
-                          {item.preparation_remark && (
-                            <span className="text-muted-foreground text-xs">
-                              Note: {item.preparation_remark}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <span className="block">
-                            Qty: {item.qty ?? item.quantity ?? 0}
-                          </span>
-                          <span className="block">
-                            {formatCurrency(item.rate ?? 0)}
-                          </span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No items for this order.
-                  </p>
-                )}
-              </div>
-              <div className="flex justify-between text-sm font-semibold">
-                <span>Total</span>
-                <span>{formatCurrency(viewOrder.total_price ?? 0)}</span>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Select an order to view its details.
-            </p>
-          )}
-          <DialogFooter>
-            <Button
-              variant="destructive"
-              onClick={() => handleDeleteOrder(selectedOrderId)}
-              disabled={isDeleting || !selectedOrderId}
-            >
-              Delete
-            </Button>
-            <Button
-              onClick={() => handleEditOrder(selectedOrderId)}
-              disabled={!selectedOrderId}
-            >
-              Edit Order
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onEdit={handleEditOrder}
+        onDeleted={async () => {
+          if (id) {
+            await fetchTableOrders(id);
+          }
+          await fetchTableDetails(id);
+        }}
+      />
     </Container>
   );
 };
