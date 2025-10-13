@@ -8,6 +8,8 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
   SelectContent,
@@ -15,6 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import Error from "@/components/Error";
 import Loader from "@/components/Loader";
@@ -29,6 +36,15 @@ const Orders = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [waiterFilter, setWaiterFilter] = useState(ALL_OPTION);
   const [statusFilter, setStatusFilter] = useState("Unpaid");
+  const [dateRange, setDateRange] = useState({
+    from: undefined,
+    to: undefined,
+  });
+  const [draftDateRange, setDraftDateRange] = useState({
+    from: undefined,
+    to: undefined,
+  });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   console.log(orders);
 
   useEffect(() => {
@@ -57,6 +73,37 @@ const Orders = () => {
     return Array.from(waiters.entries());
   }, [orders]);
 
+  const normalizedDateRange = useMemo(() => {
+    if (!dateRange?.from && !dateRange?.to) {
+      return null;
+    }
+
+    const fromDate = dateRange?.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange?.to ? new Date(dateRange.to) : null;
+
+    if (fromDate) {
+      fromDate.setHours(0, 0, 0, 0);
+    }
+
+    if (toDate) {
+      toDate.setHours(23, 59, 59, 999);
+    }
+
+    return { from: fromDate, to: toDate };
+  }, [dateRange]);
+
+  const dateRangeLabel = useMemo(() => {
+    if (dateRange?.from && dateRange?.to) {
+      return `${dateRange.from.toLocaleDateString()} — ${dateRange.to.toLocaleDateString()}`;
+    }
+
+    if (dateRange?.from) {
+      return `${dateRange.from.toLocaleDateString()} — …`;
+    }
+
+    return "All dates";
+  }, [dateRange]);
+
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       if (statusFilter !== ALL_OPTION && order.payment_status !== statusFilter) {
@@ -68,9 +115,31 @@ const Orders = () => {
         return false;
       }
 
+      if (normalizedDateRange) {
+        const creationDate = order.creation ? new Date(order.creation) : null;
+        const isValidCreationDate =
+          creationDate instanceof Date &&
+          !Number.isNaN(creationDate?.getTime());
+
+        if (!isValidCreationDate) {
+          return false;
+        }
+
+        if (
+          normalizedDateRange.from &&
+          creationDate < normalizedDateRange.from
+        ) {
+          return false;
+        }
+
+        if (normalizedDateRange.to && creationDate > normalizedDateRange.to) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [orders, statusFilter, waiterFilter]);
+  }, [orders, statusFilter, waiterFilter, normalizedDateRange]);
 
   useEffect(() => {
     if (
@@ -80,6 +149,15 @@ const Orders = () => {
       setStatusFilter(ALL_OPTION);
     }
   }, [statusOptions, statusFilter]);
+
+  useEffect(() => {
+    if (isCalendarOpen) {
+      setDraftDateRange({
+        from: dateRange?.from,
+        to: dateRange?.to,
+      });
+    }
+  }, [isCalendarOpen, dateRange]);
 
   if (orderLoading) {
     return <Loader />;
@@ -95,7 +173,7 @@ const Orders = () => {
       <Container>
         <div className="flex items-center justify-between py-4">
           <h1 className="text-2xl font-bold text-primary">Orders</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-start gap-4">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Filter by waiter</p>
               <Select
@@ -145,6 +223,74 @@ const Orders = () => {
                   )}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Filter by date</p>
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-48 justify-start">
+                    {dateRangeLabel}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3" align="end">
+                  <Calendar
+                    mode="range"
+                    numberOfMonths={1}
+                    selected={draftDateRange}
+                    onSelect={(range) => {
+                      const nextRange =
+                        range ?? {
+                          from: undefined,
+                          to: undefined,
+                        };
+                      setDraftDateRange(nextRange);
+                    }}
+                    initialFocus
+                  />
+                  <div className="mt-3 flex justify-between gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsCalendarOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setDraftDateRange({
+                            from: undefined,
+                            to: undefined,
+                          })
+                        }
+                        disabled={!draftDateRange?.from && !draftDateRange?.to}
+                      >
+                        Clear
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setDateRange({
+                            from: draftDateRange?.from,
+                            to: draftDateRange?.to,
+                          });
+                          setIsCalendarOpen(false);
+                        }}
+                        disabled={
+                          !(
+                            (!draftDateRange?.from && !draftDateRange?.to) ||
+                            (draftDateRange?.from && draftDateRange?.to)
+                          )
+                        }
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>
