@@ -55,6 +55,7 @@ const TableDetails = () => {
   const [viewOrderLoading, setViewOrderLoading] = useState(false);
   const [viewOrderError, setViewOrderError] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isTableStatusUpdating, setIsTableStatusUpdating] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
   const { register, setValue, watch } = useForm({
@@ -227,6 +228,46 @@ const TableDetails = () => {
     navigate(`/menu`);
   };
 
+  const handleTableAction = async (event) => {
+    event.preventDefault();
+    if (!tableDetails?.name) {
+      return;
+    }
+
+    const action = submitText(tableDetails.status);
+    if (action !== "Assign Table") {
+      return;
+    }
+
+    const waiter = watch("waiter");
+    if (!waiter) {
+      toast.error("Select a waiter before assigning the table.");
+      return;
+    }
+
+    setIsTableStatusUpdating(true);
+    const tableLabel = tableDetails.table_number
+      ? `Table ${tableDetails.table_number}`
+      : tableDetails.name;
+    try {
+      await db.updateDoc("HA Table", tableDetails.name, {
+        status: "Occupied",
+      });
+      toast.success("Table marked as occupied.", {
+        description: tableLabel,
+        duration: 4000,
+      });
+      await fetchTableDetails(tableDetails.name);
+    } catch (err) {
+      console.error("Table status update error:", err);
+      toast.error("Unable to update table status.", {
+        description: err?.message || "Please try again later.",
+      });
+    } finally {
+      setIsTableStatusUpdating(false);
+    }
+  };
+
   const dialogDescription = (() => {
     if (viewOrder) {
       const parts = [
@@ -386,7 +427,7 @@ const TableDetails = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <form>
+                <form onSubmit={handleTableAction}>
                   <div className="flex flex-col gap-4">
                     <div className="space-y-4">
                       <Label>Customer Name</Label>
@@ -434,27 +475,32 @@ const TableDetails = () => {
                       />
                     </div>
                     <div className="space-y-4">
-                      <Button type="submit" block>
-                        {tableDetails && submitText(tableDetails.status)}
+                      <Button
+                        type="submit"
+                        block
+                        disabled={
+                          !watch("waiter") ||
+                          loadingWaiters ||
+                          isTableStatusUpdating
+                        }
+                      >
+                        {tableDetails ? submitText(tableDetails.status) : "Assign Table"}
                       </Button>
-                      {tableOrders.table &&
-                        tableOrders.table.status === "Booked" && (
-                          <Button className="bg-gray-300 text-black" block>
-                            Cancel Booking
-                          </Button>
-                        )}
-                      {tableOrders.table &&
-                        tableOrders.table.status === "Available" && (
-                          <Button className="bg-gray-300 text-black" block>
-                            Book Table
-                          </Button>
-                        )}
-                      {tableOrders.table &&
-                        tableOrders.table.status === "Occupied" && (
-                          <Button className="bg-gray-300 text-black" block>
-                            Print Bill
-                          </Button>
-                        )}
+                      {tableDetails?.status === "Booked" && (
+                        <Button className="bg-gray-300 text-black" block>
+                          Cancel Booking
+                        </Button>
+                      )}
+                      {tableDetails?.status === "Available" && (
+                        <Button className="bg-gray-300 text-black" block>
+                          Book Table
+                        </Button>
+                      )}
+                      {tableDetails?.status === "Occupied" && (
+                        <Button className="bg-gray-300 text-black" block>
+                          Print Bill
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </form>
