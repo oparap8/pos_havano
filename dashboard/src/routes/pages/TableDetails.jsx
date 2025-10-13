@@ -442,8 +442,7 @@ const TableDetails = () => {
                         onValueChange={(value) =>
                           setValue("waiter", value, { shouldValidate: true })
                         }
-                        disabled={loadingWaiters}
-                        readonly={tableDetails.status !== "Occupied"}
+                        disabled={tableDetails.status === "Occupied" || loadingWaiters}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select waiter" />
