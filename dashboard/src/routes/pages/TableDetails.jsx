@@ -244,8 +244,14 @@ const TableDetails = () => {
                         <TableRow key={order.name}>
                           <TableCell>{order.name}</TableCell>
                           <TableCell className="text-right">
-                            <Badge variant={order.payment_status.toLowerCase()}>
-                              {order.payment_status}
+                            <Badge
+                              variant={
+                                typeof order.payment_status === "string"
+                                  ? order.payment_status.toLowerCase()
+                                  : "secondary"
+                              }
+                            >
+                              {order.payment_status || "Unknown"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">

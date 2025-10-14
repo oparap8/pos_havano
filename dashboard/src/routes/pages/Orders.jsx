@@ -36,14 +36,18 @@ const Orders = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [waiterFilter, setWaiterFilter] = useState(ALL_OPTION);
   const [statusFilter, setStatusFilter] = useState("Unpaid");
-  const [dateRange, setDateRange] = useState({
-    from: undefined,
-    to: undefined,
+  const [dateRange, setDateRange] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(today);
+    endOfToday.setHours(23, 59, 59, 999);
+
+    return {
+      from: today,
+      to: endOfToday,
+    };
   });
-  const [draftDateRange, setDraftDateRange] = useState({
-    from: undefined,
-    to: undefined,
-  });
+  const [draftDateRange, setDraftDateRange] = useState(dateRange);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   console.log(orders);
 
@@ -94,6 +98,25 @@ const Orders = () => {
 
   const dateRangeLabel = useMemo(() => {
     if (dateRange?.from && dateRange?.to) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const isSameDay = (dateA, dateB) =>
+        dateA?.getFullYear() === dateB?.getFullYear() &&
+        dateA?.getMonth() === dateB?.getMonth() &&
+        dateA?.getDate() === dateB?.getDate();
+
+      if (
+        isSameDay(dateRange.from, today) &&
+        isSameDay(dateRange.to, today)
+      ) {
+        return "Today";
+      }
+
+      if (isSameDay(dateRange.from, dateRange.to)) {
+        return dateRange.from.toLocaleDateString();
+      }
+
       return `${dateRange.from.toLocaleDateString()} — ${dateRange.to.toLocaleDateString()}`;
     }
 
@@ -232,11 +255,12 @@ const Orders = () => {
                     {dateRangeLabel}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-3" align="end">
+                <PopoverContent className="w-[360px] p-4" align="end">
                   <Calendar
                     mode="range"
                     numberOfMonths={1}
                     selected={draftDateRange}
+                    className="[--cell-size:3rem] text-base"
                     onSelect={(range) => {
                       const nextRange =
                         range ?? {
@@ -295,38 +319,47 @@ const Orders = () => {
           </div>
         </div>
         <div className="grid grid-cols-5 gap-4">
-          {filteredOrders.map((order) => (
-            <Card
-              key={order.name}
-              className="cursor-pointer transition hover:shadow-lg"
-              onClick={() => {
-                setSelectedOrderId(order.name);
-                setIsDialogOpen(true);
-              }}
-            >
-              <CardHeader className="flex justify-between items-center">
-                <p>
-                  {`${order.name} ${
-                    order.table_number ? "/ Table " + order.table_number : ""
-                  }`}
-                </p>
-                {order.payment_status && (
-                  <Badge variant={order.payment_status.toLowerCase()}>
-                    {order.payment_status}
-                  </Badge>
-                )}
-              </CardHeader>
-              <CardContent className="flex justify-between text-gray-500 text-sm">
-                <p className="font-bold">{order.waiter_name || order.waiter}</p>
-                <p>{formatDateTime(order.creation)}</p>
-              </CardContent>
-              <hr className="border border-gray-600" />
-              <CardFooter className="flex justify-between items-center font-bold">
-                <p>Total</p>
-                <p>{formatCurrency(order.total_price)}</p>
-              </CardFooter>
-            </Card>
-          ))}
+          {filteredOrders.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center rounded-md border border-dashed border-muted-foreground/40 bg-muted/20 py-10 text-center text-muted-foreground">
+              <p className="text-lg font-semibold">No orders found</p>
+              <p className="text-sm">
+                Try adjusting the filters or clear them to view more orders.
+              </p>
+            </div>
+          ) : (
+            filteredOrders.map((order) => (
+              <Card
+                key={order.name}
+                className="cursor-pointer transition hover:shadow-lg"
+                onClick={() => {
+                  setSelectedOrderId(order.name);
+                  setIsDialogOpen(true);
+                }}
+              >
+                <CardHeader className="flex justify-between items-center">
+                  <p>
+                    {`${order.name} ${
+                      order.table_number ? "/ Table " + order.table_number : ""
+                    }`}
+                  </p>
+                  {order.payment_status && (
+                    <Badge variant={order.payment_status.toLowerCase()}>
+                      {order.payment_status}
+                    </Badge>
+                  )}
+                </CardHeader>
+                <CardContent className="flex justify-between text-gray-500 text-sm">
+                  <p className="font-bold">{order.waiter_name || order.waiter}</p>
+                  <p>{formatDateTime(order.creation)}</p>
+                </CardContent>
+                <hr className="border border-gray-600" />
+                <CardFooter className="flex justify-between items-center font-bold">
+                  <p>Total</p>
+                  <p>{formatCurrency(order.total_price)}</p>
+                </CardFooter>
+              </Card>
+            ))
+          )}
         </div>
       </Container>
       <OrderDetailsDialog
