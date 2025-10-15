@@ -1,4 +1,7 @@
 import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,9 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/useCartStore";
-import { useForm } from "react-hook-form";
 
 const UpdateCartDialog = () => {
   const updateCartItem = useCartStore((state) => state.updateCartItem);

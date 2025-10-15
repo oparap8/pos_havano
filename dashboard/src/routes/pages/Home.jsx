@@ -1,6 +1,10 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import Clock from "@/components/HomePage/Clock";
-import Container from "@/components/Shared/Container";
 import OrdersList from "@/components/HomePage/OrdersList";
+import Container from "@/components/Shared/Container";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -8,33 +12,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { useMenuStore } from "@/stores/useMenuStore";
-import { useEffect, useState } from "react";
 import {
   formatCurrency,
   getCurrentUserFullName,
   getNumberOfOrders,
 } from "@/lib/utils";
 import { useCartStore } from "@/stores/useCartStore";
+import { useMenuStore } from "@/stores/useMenuStore";
 
 const Home = () => {
   const navigate = useNavigate();
   const { startNewTakeAwayOrder, addToCart, clearCart } = useCartStore();
-  const {
-    menuItems,
-    fetchMenuItems,
-    loading: menuLoading,
-    error: menuError,
-  } = useMenuStore();
+  const { menuItems, fetchMenuItems } = useMenuStore();
   const [userName, setUserName] = useState(null);
   const [popularItems, setPopularItems] = useState([]);
 
 
   useEffect(() => {
     fetchMenuItems();
-  }, []);
+  }, [fetchMenuItems]);
 
   useEffect(() => {
     const loadUserName = async () => {

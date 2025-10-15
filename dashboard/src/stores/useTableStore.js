@@ -1,4 +1,5 @@
 import { create } from "zustand";
+
 import { db } from "@/lib/frappeClient";
 import TableDetails from "@/routes/pages/TableDetails";
 
@@ -43,7 +44,7 @@ export const useTableStore = create((set) => ({
     set({ loadingTableDetails: true, errorTableDetails: null });
     try {
       const data = await db.getDoc("HA Table", tableName, {
-        fields: ["name", "table_number", "capacity", "status", "floor"],
+        fields: ["name", "table_number", "capacity", "status", "floor", "assigned_waiter"],
       });
       set({ tableDetails: data, loadingTableDetails: false });
     } catch (err) {

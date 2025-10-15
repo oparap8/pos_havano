@@ -1,25 +1,22 @@
-import Container from "@/components/Shared/Container";
-import Error from "@/components/Error";
+import { Eye, PenBox, Printer } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast, Toaster } from "sonner";
+
+import Error from "@/components/Error";
+import Loader from "@/components/Loader";
+import Container from "@/components/Shared/Container";
+import OrderDetailsDialog from "@/components/Shared/OrderDetailsDialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,17 +26,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Eye, PenBox, Printer } from "lucide-react";
-import { useWaiterStore } from "@/stores/useWaiterStore";
+import { db } from "@/lib/frappeClient";
+import { formatCurrency } from "@/lib/utils";
+import { useCartStore } from "@/stores/useCartStore";
 import { useOrderStore } from "@/stores/useOrderStore";
 import { useTableStore } from "@/stores/useTableStore";
-import { useCartStore } from "@/stores/useCartStore";
-import { formatCurrency } from "@/lib/utils";
-import Loader from "@/components/Loader";
-import { toast, Toaster } from "sonner";
-import { db } from "@/lib/frappeClient";
-import OrderDetailsDialog from "@/components/Shared/OrderDetailsDialog";
+import { useWaiterStore } from "@/stores/useWaiterStore";
 
 const TableDetails = () => {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
@@ -85,27 +86,14 @@ const TableDetails = () => {
   }, [id, fetchTableOrders, fetchWaiters]);
 
   useEffect(() => {
-    if (tableOrders.length === 0) {
-      setValue("waiter", "");
-      return;
-    }
-    const activeWaiter = tableOrders.find((order) => order.waiter);
-    if (activeWaiter?.waiter) {
-      setValue("waiter", activeWaiter.waiter);
+    if (tableDetails?.assigned_waiter) {
+      setValue("waiter", tableDetails.assigned_waiter);
     } else {
       setValue("waiter", "");
     }
   }, [tableOrders, setValue]);
 
-  const submitText = (status) => {
-    if (status === "Available") {
-      return "Assign Table";
-    } else if (status === "Occupied") {
-      return "Mark as Paid";
-    } else if (status === "Booked") {
-      return "Close Table";
-    }
-  };
+
 
   const handleNewOrder = () => {
     clearCart();
@@ -129,6 +117,23 @@ const TableDetails = () => {
     startTableOrder(id, watch("waiter"), orderId, watch("customerName"));
     navigate(`/menu`);
   };
+  
+  const handleUnassignTable = async () => {
+    if (!id) {
+      return;
+    }
+    try {
+      setIsTableStatusUpdating(true);
+      await db.updateDoc("HA Table", id, {
+        status: "Available",
+      });
+      fetchTableDetails(id);
+    } catch (err) {
+      console.error("Table status update error:", err);
+    } finally {
+      setIsTableStatusUpdating(false);
+    }
+  };
 
   const handleTableAction = async (event) => {
     event.preventDefault();
@@ -136,37 +141,23 @@ const TableDetails = () => {
       return;
     }
 
-    const action = submitText(tableDetails.status);
-    if (action !== "Assign Table") {
-      return;
-    }
-
     const waiter = watch("waiter");
     if (!waiter) {
-      toast.error("Select a waiter before assigning the table.");
+      toast.error("Select a waiter before placing an order.");
       return;
     }
 
-    setIsTableStatusUpdating(true);
-    const tableLabel = tableDetails.table_number
-      ? `Table ${tableDetails.table_number}`
-      : tableDetails.name;
-    try {
-      await db.updateDoc("HA Table", tableDetails.name, {
-        status: "Occupied",
-      });
-      toast.success("Table marked as occupied.", {
-        description: tableLabel,
-        duration: 4000,
-      });
-      await fetchTableDetails(tableDetails.name);
-    } catch (err) {
-      console.error("Table status update error:", err);
-      toast.error("Unable to update table status.", {
-        description: err?.message || "Please try again later.",
-      });
-    } finally {
-      setIsTableStatusUpdating(false);
+    if (tableDetails.status !== "Occupied") { 
+      try {
+        await db.updateDoc("HA Table", tableDetails.name, {
+          status: "Occupied",
+        });
+      handleNewOrder();
+      } catch (err) {
+        console.error("Table status update error:", err);
+      }
+    }else{
+      handleNewOrder();
     }
   };
 
@@ -241,26 +232,26 @@ const TableDetails = () => {
                       </TableRow>
                     ) : tableOrders.length > 0 ? (
                       tableOrders.map((order) => (
-                        <TableRow key={order.name}>
-                          <TableCell>{order.name}</TableCell>
+                        <TableRow key={order.order}>
+                          <TableCell>{order.order}</TableCell>
                           <TableCell className="text-right">
                             <Badge
                               variant={
-                                typeof order.payment_status === "string"
-                                  ? order.payment_status.toLowerCase()
+                                typeof order.status === "string"
+                                  ? order.status.toLowerCase()
                                   : "secondary"
                               }
                             >
-                              {order.payment_status || "Unknown"}
+                              {order.status || "Unknown"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(order.total_price)}
+                            {formatCurrency(order.value)}
                           </TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="secondary"
-                              onClick={() => handleViewOrder(order.name)}
+                              onClick={() => handleViewOrder(order.order)}
                             >
                               <Eye />
                               View
@@ -284,7 +275,7 @@ const TableDetails = () => {
                       <TableCell></TableCell>
                       <TableCell className="font-bold text-right">
                         {formatCurrency(
-                          tableOrders.reduce((sum, o) => sum + o.total_price, 0)
+                          tableOrders.reduce((sum, o) => sum + o.value, 0)
                         )}
                       </TableCell>
                       <TableCell></TableCell>
@@ -292,7 +283,7 @@ const TableDetails = () => {
                   </TableBody>
                 </Table>
               </CardContent>
-              <CardFooter className="flex justify-end">
+              {/* <CardFooter className="flex justify-end">
                 <div>
                   <Button
                     disabled={
@@ -303,7 +294,7 @@ const TableDetails = () => {
                     New Order
                   </Button>
                 </div>
-              </CardFooter>
+              </CardFooter> */}
             </Card>
           </div>
           <div className="flex-2 h-full">
@@ -329,7 +320,9 @@ const TableDetails = () => {
                         onValueChange={(value) =>
                           setValue("waiter", value, { shouldValidate: true })
                         }
-                        disabled={tableDetails.status === "Occupied" || loadingWaiters}
+                        disabled={
+                          tableDetails.status === "Occupied" || loadingWaiters
+                        }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select waiter" />
@@ -373,28 +366,37 @@ const TableDetails = () => {
                           isTableStatusUpdating
                         }
                       >
-                        {tableDetails
-                          ? submitText(tableDetails.status)
-                          : "Assign Table"}
+                        New Order
                       </Button>
-                      {tableDetails?.status === "Booked" && (
-                        <Button className="bg-gray-300 text-black" block>
-                          Cancel Booking
-                        </Button>
-                      )}
-                      {tableDetails?.status === "Available" && (
-                        <Button className="bg-gray-300 text-black" block>
-                          Book Table
-                        </Button>
-                      )}
-                      {tableDetails?.status === "Occupied" && (
-                        <Button className="bg-gray-300 text-black" block>
-                          Print Bill
-                        </Button>
-                      )}
+
+                      {/* {tableDetails?.status === "Occupied" && (
+                        <div className="flex flex-col gap-2">
+                          <Button className="bg-gray-300 hover:bg-gray-400 text-black" block>
+                            Close Table
+                          </Button>
+                          <Button className="bg-gray-300 hover:bg-gray-400 text-black" block>
+                            Print Bill
+                          </Button>
+                        </div>
+                      )} */}
                     </div>
                   </div>
                 </form>
+                {tableDetails?.status === "Available" && (
+                  <Button className="bg-gray-300 text-black" block>
+                    Book Table
+                  </Button>
+                )}
+                {tableDetails?.status === "Occupied" &&
+                  tableOrders.length === 0 && (
+                    <Button
+                      className="bg-gray-300 text-black"
+                      block
+                      onClick={handleUnassignTable}
+                    >
+                      Unassign Table
+                    </Button>
+                  )}
               </CardContent>
             </Card>
           </div>

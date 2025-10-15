@@ -1,6 +1,7 @@
-import navLinks from "@/navLinks";
 import { NavLink, useNavigate } from "react-router-dom";
+
 import Container from "@/components/Shared/Container";
+import navLinks from "@/navLinks";
 import { useCartStore } from "@/stores/useCartStore";
 
 const Footer = () => {

@@ -96,6 +96,8 @@
 
 // export default OrdersFilter;
 
+import { useEffect } from "react";
+
 import {
   Select,
   SelectContent,
@@ -103,7 +105,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect } from "react";
 import { useTableStore } from "@/stores/useTableStore";
 import { useWaiterStore } from "@/stores/useWaiterStore";
 

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+
 import { db } from "@/lib/frappeClient";
 
 export const useWaiterStore = create((set) => ({

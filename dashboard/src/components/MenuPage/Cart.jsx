@@ -1,21 +1,23 @@
-import { useNavigate } from "react-router-dom";
-import { Toaster, toast } from "sonner";
 import { Edit, ShoppingCart, Trash2 } from "lucide-react";
 import { useState } from "react";
-import UpdateCartDialog from "./UpdateCartDialog";
+import { useNavigate } from "react-router-dom";
+import { toast,Toaster } from "sonner";
+
+import { formatCurrency } from "@/lib/utils";
+import { handleCreateOrder, handleUpdateOrder } from "@/lib/utils";
+import { useCartStore } from "@/stores/useCartStore";
+import { useOrderStore } from "@/stores/useOrderStore";
+
 import Clock from "../HomePage/Clock";
+import { Button } from "../ui/button";
 import {
   Card,
+  CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-  CardContent,
 } from "../ui/card";
-import { Button } from "../ui/button";
-import { useCartStore } from "@/stores/useCartStore";
-import { formatCurrency } from "@/lib/utils";
-import { handleCreateOrder, handleUpdateOrder } from "@/lib/utils";
-import { useOrderStore } from "@/stores/useOrderStore";
+import UpdateCartDialog from "./UpdateCartDialog";
 
 const Cart = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +36,7 @@ const Cart = () => {
     clearCart,
   } = useCartStore();
 
-  console.log("cart", cart);
+  console.log("waiter", activeWaiterId);
   console.log("activeOrderId", activeOrderId);
 
   const handleSubmitOrder = async (cart) => {

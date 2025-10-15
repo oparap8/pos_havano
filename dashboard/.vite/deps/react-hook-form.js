@@ -2083,11 +2083,11 @@ function useForm(props = {}) {
   return _formControl.current;
 }
 export {
+  appendErrors,
   Controller,
+  createFormControl,
   Form,
   FormProvider,
-  appendErrors,
-  createFormControl,
   get,
   set,
   useController,

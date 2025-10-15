@@ -1,3 +1,8 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -8,11 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useOrderStore } from "@/stores/useOrderStore";
-import { useEffect, useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+
 import OrdersFilter from "./OrdersFilter";
-import { useNavigate } from "react-router-dom";
 
 const OrdersList = () => {
   const orders = useOrderStore((state) => state.orders);
@@ -39,20 +41,18 @@ const OrdersList = () => {
     if (filters.status) {
       filtered = filtered.filter(
         (o) =>
-          o.payment_status &&
-          o.payment_status.toLowerCase() === filters.status.toLowerCase()
+          o.order_status &&
+          o.order_status.toLowerCase() === filters.status.toLowerCase()
       );
     }
 
     if (filters.waiter) {
-      filtered = filtered.filter(
-        (o) => {
-          const waiterName = (o.waiter_name || "").toLowerCase();
-          const waiterId = (o.waiter || "").toLowerCase();
-          const target = filters.waiter.toLowerCase();
-          return waiterName === target || waiterId === target;
-        }
-      );
+      filtered = filtered.filter((o) => {
+        const waiterName = (o.waiter_name || "").toLowerCase();
+        const waiterId = (o.waiter || "").toLowerCase();
+        const target = filters.waiter.toLowerCase();
+        return waiterName === target || waiterId === target;
+      });
     }
 
     if (filters.table) {
@@ -69,7 +69,7 @@ const OrdersList = () => {
   const statusOptions = useMemo(() => {
     const unique = new Set(
       orders
-        .map((order) => order.payment_status)
+        .map((order) => order.order_status)
         .filter((status) => typeof status === "string" && status.length > 0)
     );
     return Array.from(unique);
@@ -145,12 +145,12 @@ const OrdersList = () => {
                 <TableCell className="text-right">
                   <Badge
                     variant={
-                      typeof order.payment_status === "string"
-                        ? order.payment_status.toLowerCase()
+                      typeof order.order_status === "string"
+                        ? order.order_status.toLowerCase()
                         : "secondary"
                     }
                   >
-                    {order.payment_status || "Unknown"}
+                    {order.order_status || "Unknown"}
                   </Badge>
                 </TableCell>
               </TableRow>

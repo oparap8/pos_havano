@@ -1,15 +1,16 @@
-import Container from "@/components/Shared/Container";
-import { useTableStore } from "@/stores/useTableStore";
-import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Utensils } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getBgColor } from "@/lib/utils";
-import Loader from "@/components/Loader";
+
 import Error from "@/components/Error";
+import Loader from "@/components/Loader";
+import Container from "@/components/Shared/Container";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent,CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getBgColor } from "@/lib/utils";
+import { useTableStore } from "@/stores/useTableStore";
 
 const Tables = () => {
   const {
@@ -30,7 +31,7 @@ const Tables = () => {
   useEffect(() => {
     fetchTables();
     fetchFloors();
-  }, []);
+  }, [fetchFloors, fetchTables]);
 
   if (loadingTables || loadingFloors) {
     return <Loader />;

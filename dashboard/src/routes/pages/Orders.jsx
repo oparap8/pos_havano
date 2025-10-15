@@ -1,15 +1,23 @@
-import Container from "@/components/Shared/Container";
 import { useEffect, useMemo, useState } from "react";
-import { useOrderStore } from "@/stores/useOrderStore";
-import {
-  Card,
-  CardFooter,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
+
+import Error from "@/components/Error";
+import Loader from "@/components/Loader";
+import Container from "@/components/Shared/Container";
+import OrderDetailsDialog from "@/components/Shared/OrderDetailsDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -17,21 +25,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
-import Error from "@/components/Error";
-import Loader from "@/components/Loader";
-import OrderDetailsDialog from "@/components/Shared/OrderDetailsDialog";
+import { useOrderStore } from "@/stores/useOrderStore";
 
 const ALL_OPTION = "__all__";
 
 const Orders = () => {
-  const { orders, loading: orderLoading, error: orderError, fetchOrders } =
-    useOrderStore();
+  const {
+    orders,
+    loading: orderLoading,
+    error: orderError,
+    fetchOrders,
+  } = useOrderStore();
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [waiterFilter, setWaiterFilter] = useState(ALL_OPTION);
@@ -53,13 +58,13 @@ const Orders = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
 
   const statusOptions = useMemo(() => {
     const statuses = new Set();
     orders.forEach((order) => {
-      if (order.payment_status) {
-        statuses.add(order.payment_status);
+      if (order.order_status) {
+        statuses.add(order.order_status);
       }
     });
     return Array.from(statuses);
@@ -106,10 +111,7 @@ const Orders = () => {
         dateA?.getMonth() === dateB?.getMonth() &&
         dateA?.getDate() === dateB?.getDate();
 
-      if (
-        isSameDay(dateRange.from, today) &&
-        isSameDay(dateRange.to, today)
-      ) {
+      if (isSameDay(dateRange.from, today) && isSameDay(dateRange.to, today)) {
         return "Today";
       }
 
@@ -129,7 +131,7 @@ const Orders = () => {
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      if (statusFilter !== ALL_OPTION && order.payment_status !== statusFilter) {
+      if (statusFilter !== ALL_OPTION && order.order_status !== statusFilter) {
         return false;
       }
 
@@ -165,10 +167,7 @@ const Orders = () => {
   }, [orders, statusFilter, waiterFilter, normalizedDateRange]);
 
   useEffect(() => {
-    if (
-      statusFilter !== ALL_OPTION &&
-      !statusOptions.includes(statusFilter)
-    ) {
+    if (statusFilter !== ALL_OPTION && !statusOptions.includes(statusFilter)) {
       setStatusFilter(ALL_OPTION);
     }
   }, [statusOptions, statusFilter]);
@@ -262,11 +261,10 @@ const Orders = () => {
                     selected={draftDateRange}
                     className="[--cell-size:3rem] text-base"
                     onSelect={(range) => {
-                      const nextRange =
-                        range ?? {
-                          from: undefined,
-                          to: undefined,
-                        };
+                      const nextRange = range ?? {
+                        from: undefined,
+                        to: undefined,
+                      };
                       setDraftDateRange(nextRange);
                     }}
                     initialFocus
@@ -342,14 +340,16 @@ const Orders = () => {
                       order.table_number ? "/ Table " + order.table_number : ""
                     }`}
                   </p>
-                  {order.payment_status && (
-                    <Badge variant={order.payment_status.toLowerCase()}>
-                      {order.payment_status}
+                  {order.order_status && (
+                    <Badge variant={order.order_status.toLowerCase()}>
+                      {order.order_status}
                     </Badge>
                   )}
                 </CardHeader>
                 <CardContent className="flex justify-between text-gray-500 text-sm">
-                  <p className="font-bold">{order.waiter_name || order.waiter}</p>
+                  <p className="font-bold">
+                    {order.waiter_name || order.waiter}
+                  </p>
                   <p>{formatDateTime(order.creation)}</p>
                 </CardContent>
                 <hr className="border border-gray-600" />
@@ -369,7 +369,7 @@ const Orders = () => {
           setIsDialogOpen(false);
           setSelectedOrderId(null);
         }}
-        onEdit={(orderId) => {
+        onEdit={() => {
           setIsDialogOpen(false);
           setSelectedOrderId(null);
         }}

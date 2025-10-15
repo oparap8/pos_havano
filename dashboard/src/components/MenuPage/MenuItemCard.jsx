@@ -1,6 +1,7 @@
-import { Card, CardHeader, CardTitle } from "../ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/stores/useCartStore";
+
+import { Card, CardHeader, CardTitle } from "../ui/card";
 
 const MenuItemCard = ({ item }) => {
 

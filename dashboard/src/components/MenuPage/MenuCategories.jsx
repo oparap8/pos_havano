@@ -1,6 +1,10 @@
-import { getBgColor, getNumberOfItems } from "@/lib/utils";
-import { useMenuStore } from "@/stores/useMenuStore";
+import { ChevronsRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+
+import { getBgColor, getNumberOfItems } from "@/lib/utils";
+import { useCartStore } from "@/stores/useCartStore";
+import { useMenuStore } from "@/stores/useMenuStore";
+
 import {
   Drawer,
   DrawerContent,
@@ -9,8 +13,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
-import { ChevronsRight } from "lucide-react";
-import { useCartStore } from "@/stores/useCartStore";
 
 const MenuCategories = () => {
   const { menuCategories, fetchMenuCategories } = useMenuStore();
@@ -89,7 +91,7 @@ const MenuCategories = () => {
     return () => {
       isCancelled = true;
     };
-  }, [menuCategories]);
+  }, [categories]);
 
   return (
     <>

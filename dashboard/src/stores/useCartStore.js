@@ -1,7 +1,8 @@
 import { create } from "zustand";
+
 import { db } from "@/lib/frappeClient";
 
-export const useCartStore = create((set, get) => ({
+export const useCartStore = create((set) => ({
   cart: [],
   orderType: "Dine In",
   activeTableId: null,
