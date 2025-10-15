@@ -1,5 +1,5 @@
-app_name = "havano_pos_addson"
-app_title = "Havano Pos Addson"
+app_name = "havano_pos"
+app_title = "Havano Pos"
 app_publisher = "showline"
 app_description = "addson of the havano pos"
 app_email = "wisdommapeka@gmail.com"
