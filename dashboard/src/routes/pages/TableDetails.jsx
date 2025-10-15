@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { db } from "@/lib/frappeClient";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, markTableAsPaid } from "@/lib/utils";
 import { useCartStore } from "@/stores/useCartStore";
 import { useOrderStore } from "@/stores/useOrderStore";
 import { useTableStore } from "@/stores/useTableStore";
@@ -46,6 +46,7 @@ const TableDetails = () => {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isTableStatusUpdating, setIsTableStatusUpdating] = useState(false);
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
   const { register, setValue, watch } = useForm({
@@ -158,6 +159,25 @@ const TableDetails = () => {
       }
     }else{
       handleNewOrder();
+    }
+  };
+
+  const handleMarkAsPaid = async () => {
+    if (!tableDetails?.name) {
+      return;
+    }
+    try {
+      setIsMarkingPaid(true);
+      await markTableAsPaid(tableDetails.name);
+      toast.success("Table marked as paid.");
+      if (id) {
+        await fetchTableOrders(id);
+        await fetchTableDetails(id);
+      }
+    } catch (err) {
+      toast.error("Failed to mark table as paid.");
+    } finally {
+      setIsMarkingPaid(false);
     }
   };
 
@@ -283,18 +303,6 @@ const TableDetails = () => {
                   </TableBody>
                 </Table>
               </CardContent>
-              {/* <CardFooter className="flex justify-end">
-                <div>
-                  <Button
-                    disabled={
-                      tableDetails.status !== "Occupied" || loadingWaiters
-                    }
-                    onClick={handleNewOrder}
-                  >
-                    New Order
-                  </Button>
-                </div>
-              </CardFooter> */}
             </Card>
           </div>
           <div className="flex-2 h-full">
@@ -356,7 +364,7 @@ const TableDetails = () => {
                         className="min-h-[200px]"
                       />
                     </div>
-                    <div className="space-y-4">
+                    <div className="mb-4">
                       <Button
                         type="submit"
                         block
@@ -368,33 +376,33 @@ const TableDetails = () => {
                       >
                         New Order
                       </Button>
-
-                      {/* {tableDetails?.status === "Occupied" && (
-                        <div className="flex flex-col gap-2">
-                          <Button className="bg-gray-300 hover:bg-gray-400 text-black" block>
-                            Close Table
-                          </Button>
-                          <Button className="bg-gray-300 hover:bg-gray-400 text-black" block>
-                            Print Bill
-                          </Button>
-                        </div>
-                      )} */}
                     </div>
                   </div>
                 </form>
                 {tableDetails?.status === "Available" && (
-                  <Button className="bg-gray-300 text-black" block>
+                  <Button className="bg-gray-300 hover:bg-gray-200 text-black" block>
                     Book Table
                   </Button>
                 )}
                 {tableDetails?.status === "Occupied" &&
                   tableOrders.length === 0 && (
                     <Button
-                      className="bg-gray-300 text-black"
+                      className="bg-gray-300 hover:bg-gray-200 text-black"
                       block
                       onClick={handleUnassignTable}
                     >
                       Unassign Table
+                    </Button>
+                  )}
+                {tableDetails?.status === "Occupied" &&
+                  tableOrders.length > 0 && (
+                    <Button
+                      className="bg-gray-300 hover:bg-gray-200 text-black"
+                      block
+                      disabled={isMarkingPaid}
+                      onClick={handleMarkAsPaid}
+                    >
+                      Mark as Paid
                     </Button>
                   )}
               </CardContent>

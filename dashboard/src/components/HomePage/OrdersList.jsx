@@ -77,21 +77,6 @@ const OrdersList = () => {
 
   return (
     <>
-      <TableCaption className="text-lg font-bold flex justify-between items-center">
-        <p>Orders</p>
-        <div>
-          <Button
-            variant="link"
-            onClick={() => setFilters({ status: "", waiter: "", table: "" })}
-          >
-            Clear Filters
-          </Button>
-          <Button variant="link" onClick={() => navigate("/orders")}>
-            View All
-          </Button>
-        </div>
-      </TableCaption>
-
       {/* Pass filters + setter to child */}
       <OrdersFilter
         filters={filters}
@@ -100,6 +85,24 @@ const OrdersList = () => {
       />
 
       <Table className="px-4" maxHeight="25rem">
+        <TableCaption className="text-lg font-bold">
+          <div className="flex justify-between items-center">
+            <p>Orders</p>
+            <div>
+              <Button
+                variant="link"
+                onClick={() =>
+                  setFilters({ status: "", waiter: "", table: "" })
+                }
+              >
+                Clear Filters
+              </Button>
+              <Button variant="link" onClick={() => navigate("/orders")}>
+                View All
+              </Button>
+            </div>
+          </div>
+        </TableCaption>
         <TableHeader>
           <TableRow className="h-10 font-bold">
             <TableHead className="w-[100px] text-xl font-bold">ID</TableHead>

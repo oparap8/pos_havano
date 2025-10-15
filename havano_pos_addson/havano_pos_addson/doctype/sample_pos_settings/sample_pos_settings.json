@@ -8,7 +8,9 @@
   "menu_item_group",
   "default_dine_in_customer",
   "default_take_away_customer",
-  "default_account"
+  "default_account",
+  "allow_staff_to_change_prices",
+  "allow_staff_to_void_orders"
  ],
  "fields": [
   {
@@ -34,13 +36,25 @@
    "fieldtype": "Link",
    "label": "Default Account",
    "options": "Account"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_staff_to_change_prices",
+   "fieldtype": "Check",
+   "label": "Allow Staff to Change Prices"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_staff_to_void_orders",
+   "fieldtype": "Check",
+   "label": "Allow Staff to Void Orders"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-10-08 13:49:28.837572",
+ "modified": "2025-10-15 13:59:09.137666",
  "modified_by": "Administrator",
  "module": "Havano Pos Addson",
  "name": "Sample POS Settings",

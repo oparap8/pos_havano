@@ -54,7 +54,6 @@ const Orders = () => {
   });
   const [draftDateRange, setDraftDateRange] = useState(dateRange);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  console.log(orders);
 
   useEffect(() => {
     fetchOrders();

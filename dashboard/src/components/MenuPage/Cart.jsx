@@ -36,8 +36,6 @@ const Cart = () => {
     clearCart,
   } = useCartStore();
 
-  console.log("waiter", activeWaiterId);
-  console.log("activeOrderId", activeOrderId);
 
   const handleSubmitOrder = async (cart) => {
     if (!cart || cart.length === 0) {
@@ -80,7 +78,6 @@ const Cart = () => {
           duration: 4000,
         });
 
-        console.log("Order response:", res);
 
         try {
           await fetchOrders();

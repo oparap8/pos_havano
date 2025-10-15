@@ -11,7 +11,6 @@ export const useOrderStore = create((set) => ({
   tableOrdersError: null,
 
   fetchOrders: async () => {
-    console.log("fetching orders");
     set({ loading: true, error: null });
     try {
       // fetch all orders

@@ -7,7 +7,7 @@
  "field_order": [
   "waiter_name",
   "column_break_womt",
-  "phone_no"
+  "user"
  ],
  "fields": [
   {
@@ -23,15 +23,17 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "phone_no",
-   "fieldtype": "Phone",
-   "label": "Phone No"
+   "allow_in_quick_entry": 1,
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-06 22:47:12.839556",
+ "modified": "2025-10-14 19:07:10.014543",
  "modified_by": "Administrator",
  "module": "Havano Pos Addson",
  "name": "HA Waiter",
