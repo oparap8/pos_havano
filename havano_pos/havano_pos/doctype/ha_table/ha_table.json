@@ -8,8 +8,13 @@
   "table_number",
   "column_break_zpmi",
   "capacity",
-  "column_break_itiq",
-  "status"
+  "section_break_myfr",
+  "status",
+  "assigned_waiter",
+  "column_break_wpbu",
+  "floor",
+  "section_break_wvwq",
+  "table_order"
  ],
  "fields": [
   {
@@ -37,21 +42,47 @@
    "reqd": 1
   },
   {
-   "fieldname": "column_break_itiq",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
    "options": "Available\nOccupied\nBooked"
+  },
+  {
+   "fieldname": "section_break_myfr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_wpbu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "floor",
+   "fieldtype": "Link",
+   "label": "Floor",
+   "options": "HA Floor"
+  },
+  {
+   "fieldname": "section_break_wvwq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "table_order",
+   "fieldtype": "Table",
+   "label": "Table Order",
+   "options": "HA Table Order"
+  },
+  {
+   "fieldname": "assigned_waiter",
+   "fieldtype": "Link",
+   "label": "Assigned Waiter",
+   "options": "HA Waiter"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-06 00:28:37.130565",
+ "modified": "2025-10-14 21:02:36.804497",
  "modified_by": "Administrator",
  "module": "Havano Pos Addson",
  "name": "HA Table",

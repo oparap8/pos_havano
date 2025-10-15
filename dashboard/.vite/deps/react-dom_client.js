@@ -1,10 +1,10 @@
 import {
-  require_react_dom
-} from "./chunk-JJSCUBFW.js";
-import {
   __commonJS,
   require_react
 } from "./chunk-H3AANLML.js";
+import {
+  require_react_dom
+} from "./chunk-JJSCUBFW.js";
 
 // node_modules/scheduler/cjs/scheduler.development.js
 var require_scheduler_development = __commonJS({

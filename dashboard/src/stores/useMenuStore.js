@@ -1,7 +1,8 @@
 import { create } from "zustand";
+
 import { db } from "@/lib/frappeClient";
 
-export const useMenuStore = create((set, get) => ({
+export const useMenuStore = create((set) => ({
   menuItems: [],
   menuCategories: [],
   loading: false,

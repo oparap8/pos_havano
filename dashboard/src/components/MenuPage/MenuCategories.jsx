@@ -1,52 +1,102 @@
-import { useEffect, useState } from "react";
-import { getBgColor } from "@/lib/utils";
-import { getMenuCategories } from "@/api";
-import { useContext } from "react";
+import { ChevronsRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
+import { getBgColor, getNumberOfItems } from "@/lib/utils";
+import { useCartStore } from "@/stores/useCartStore";
+import { useMenuStore } from "@/stores/useMenuStore";
+
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
-import { ChevronsRight } from "lucide-react";
-import { MenuCartContext } from "@/routes/pages/MenuPage";
 
 const MenuCategories = () => {
-  const [menuCategories, setMenuCategories] = useState([]);
+  const { menuCategories, fetchMenuCategories } = useMenuStore();
   const [categoryColors, setCategoryColors] = useState({});
-  const { selectedCategory, setSelectedCategory } = useContext(MenuCartContext);
+  const [categoryCounts, setCategoryCounts] = useState({});
+  const selectedCategory = useCartStore((state) => state.selectedCategory);
+  const setSelectedCategory = useCartStore((state) => state.setSelectedCategory);
+
+  const categories = useMemo(
+    () => [
+      { name: "all", category_name: "All" },
+      ...menuCategories,
+    ],
+    [menuCategories]
+  );
 
   useEffect(() => {
-    const fetchMenuCategories = async () => {
-      let categories = await getMenuCategories();
-      console.log(categories);
-      const category = { id: categories[0].id, name: categories[0].name };
+    fetchMenuCategories();
+  }, [fetchMenuCategories]);
 
-      // set directly
-      setSelectedCategory(category);
-      console.log("Selected category:", selectedCategory);
+  useEffect(() => {
+    if (!categories.length) {
+      return;
+    }
 
-      // Generate a color for each category once
-      const colors = {};
+    setSelectedCategory((prevSelected) => {
+      if (prevSelected && prevSelected.id) {
+        return prevSelected;
+      }
+      const firstCategory = categories[0];
+      return {
+        id: firstCategory.name,
+        name: firstCategory.category_name,
+      };
+    });
+
+    setCategoryColors((prevColors) => {
+      const nextColors = { ...prevColors };
       categories.forEach((category) => {
-        colors[category.id] = getBgColor();
+        if (!nextColors[category.name]) {
+          nextColors[category.name] = getBgColor();
+        }
       });
+      return nextColors;
+    });
+  }, [categories, setSelectedCategory]);
 
-      setMenuCategories(categories);
-      setCategoryColors(colors);
+  useEffect(() => {
+    if (!categories.length) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadCounts = async () => {
+      const entries = await Promise.all(
+        categories.map(async (category) => {
+          const count =
+            category.name === "all"
+              ? await getNumberOfItems()
+              : await getNumberOfItems(category.name);
+          return [category.name, count];
+        })
+      );
+
+      if (!isCancelled) {
+        setCategoryCounts((prevCounts) => ({
+          ...prevCounts,
+          ...Object.fromEntries(entries),
+        }));
+      }
     };
 
-    fetchMenuCategories();
-  }, []);
+    loadCounts();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [categories]);
 
   return (
     <>
       <Drawer>
-        <DrawerTrigger className="flex gap-2 items-center text-secondary text-lg pb-[2px] hover:pb-0 hover:border-b-2 hover:border-secondary cursor-pointer">
+        <DrawerTrigger className="flex gap-2 items-center text-primary text-lg pb-[2px] hover:pb-0 hover:border-b-2 hover:border-primary cursor-pointer">
           View Categories
           <ChevronsRight />
         </DrawerTrigger>
@@ -57,27 +107,27 @@ const MenuCategories = () => {
           </DrawerHeader>
           <div className="p-4 mt-2 overflow-y-auto scrollbar-hide">
             <div className="grid grid-cols-1 gap-4">
-              {menuCategories.map((category) => (
+              {categories.map((category) => (
                 <div
-                  key={category.id}
-                  style={{ backgroundColor: categoryColors[category.id] }}
+                  key={category.name}
+                  style={{ backgroundColor: categoryColors[category.name] }}
                   className={`flex flex-col p-4 rounded-lg h-[100px] cursor-pointer ${
-                    selectedCategory.id === category.id
+                    selectedCategory.id === category.name
                       ? "ring-2 ring-white"
                       : ""
                   }`}
                   onClick={() =>
                     setSelectedCategory({
-                      id: category.id,
-                      name: category.name,
+                      id: category.name,
+                      name: category.category_name,
                     })
                   }
                 >
                   <div className="flex justify-between items-center gap-2">
                     <h1 className="text-2xl text-white font-bold">
-                      {category.name}
+                      {category.category_name}
                     </h1>
-                    {selectedCategory.id === category.id && (
+                    {selectedCategory.id === category.name && (
                       <div className="border-2 border-white p-1 rounded-full">
                         <div className="w-3 h-3 bg-white rounded-full"></div>
                       </div>
@@ -85,7 +135,8 @@ const MenuCategories = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-200 mt-4">
-                      {category.itemCount} items
+                      {categoryCounts[category.name] ?? 0} {
+                        categoryCounts[category.name] === 1 ? "item" : "items"}
                     </p>
                   </div>
                 </div>

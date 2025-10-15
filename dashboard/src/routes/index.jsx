@@ -1,14 +1,16 @@
-import MainLayout from "@/layouts/MainLayout";
 import {
   createBrowserRouter,
   createRoutesFromElements,
   Route,
 } from "react-router-dom";
-import Home from "./pages/Home";
-import Tables from "./pages/Tables";
-import Orders from "./pages/Orders";
+
+import MainLayout from "@/layouts/MainLayout";
 import MenuPage from "@/routes/pages/MenuPage";
+
+import Home from "./pages/Home";
+import Orders from "./pages/Orders";
 import TableDetails from "./pages/TableDetails";
+import Tables from "./pages/Tables";
 
 const router = createBrowserRouter(
   createRoutesFromElements(

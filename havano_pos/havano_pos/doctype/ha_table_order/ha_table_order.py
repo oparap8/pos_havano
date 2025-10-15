@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class HATable(Document):
+class HATableOrder(Document):
 	pass

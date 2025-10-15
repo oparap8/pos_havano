@@ -1,69 +1,67 @@
+import Cart from "@/components/MenuPage/Cart";
+import Menu from "@/components/MenuPage/Menu";
 import MenuCategories from "@/components/MenuPage/MenuCategories";
 import Container from "@/components/Shared/Container";
-import { createContext, useState } from "react";
-import Menu from "@/components/MenuPage/Menu";
-import Cart from "@/components/MenuPage/Cart";
-import NumPad from "@/components/MenuPage/UpdateCartDialog";
-
-export const MenuCartContext = createContext();
+import { useCartStore } from "@/stores/useCartStore";
+import { useNavigate } from "react-router-dom";
 
 const MenuPage = () => {
-  const [cart, setCart] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState({});
-  const addToCart = (item) => {
-    setCart((prevCart) => {
-      const itemInCart = prevCart.find((cartItem) => cartItem.id === item.id);
-      if (itemInCart) {
-        // Replace quantity with the new value
-        return prevCart.map((cartItem) =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        );
-      } else {
-        // Add as a new item
-        return [...prevCart, item];
-      }
-    });
-    console.log(cart);
+  const navigate = useNavigate();
+  const { startNewTakeAwayOrder, activeTableId } = useCartStore();
+  const isDineInSelected = Boolean(activeTableId);
+
+  const handleDineInClick = () => {
+    navigate("/tables");
   };
 
-  const updateCartItem = (updatedItem) => {
-    setCart((prevCart) =>
-      prevCart.map((cartItem) =>
-        cartItem.id === updatedItem.id
-          ? { ...cartItem, ...updatedItem }
-          : cartItem
-      )
-    );
-  };
-  const removeFromCart = (item) => {
-    setCart(cart.filter((cartItem) => cartItem.id !== item.id));
+  const handleTakeAwayClick = () => {
+    startNewTakeAwayOrder();
   };
 
   return (
-    <MenuCartContext.Provider
-      value={{
-        cart,
-        addToCart,
-        removeFromCart,
-        selectedCategory,
-        setSelectedCategory,
-        updateCartItem,
-      }}
-    >
-      <Container>
-        <div className="grid grid-cols-7 gap-4 relative z-0">
-          <div className="col-span-5">
+    <Container>
+      <div className="grid grid-cols-7 gap-4 relative z-0">
+        <div className="col-span-5">
+          <div className="flex items-center gap-4">
             <MenuCategories />
-            <Menu />
+            <div className="flex items-center gap-2">
+              <label className="cursor-pointer">
+                <input
+                  type="radio"
+                  name="order-type"
+                  value="dine-in"
+                  checked={isDineInSelected}
+                  className="peer sr-only"
+                  onChange={() => {}}
+                  onClick={handleDineInClick}
+                />
+                <span className="rounded-full border border-slate-300 px-3 py-1 text-sm font-medium text-slate-600 transition-colors peer-checked:border-slate-900 peer-checked:bg-slate-900 peer-checked:text-white">
+                  Dine In
+                </span>
+              </label>
+              <label className="cursor-pointer">
+                <input
+                  type="radio"
+                  name="order-type"
+                  value="take-away"
+                  checked={!isDineInSelected}
+                  className="peer sr-only"
+                  onChange={() => {}}
+                  onClick={handleTakeAwayClick}
+                />
+                <span className="rounded-full border border-slate-300 px-3 py-1 text-sm font-medium text-slate-600 transition-colors peer-checked:border-slate-900 peer-checked:bg-slate-900 peer-checked:text-white">
+                  Take Away
+                </span>
+              </label>
+            </div>
           </div>
-          <div className="col-span-2">
-            <Cart />
-          </div>
+          <Menu />
         </div>
-      </Container>
-    </MenuCartContext.Provider>
+        <div className="col-span-2">
+          <Cart />
+        </div>
+      </div>
+    </Container>
   );
 };
 

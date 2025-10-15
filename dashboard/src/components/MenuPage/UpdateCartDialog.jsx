@@ -1,4 +1,7 @@
-import { useState, useEffect, useContext } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,122 +10,107 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { MenuCartContext } from "@/routes/pages/MenuPage";
-import Keyboard from "react-simple-keyboard";
-import "react-simple-keyboard/build/css/index.css";
+import { useCartStore } from "@/stores/useCartStore";
 
-const UpdateCartDialog = ({ isOpen, setIsOpen, item = {} }) => {
-  const { updateCartItem } = useContext(MenuCartContext);
+const UpdateCartDialog = () => {
+  const updateCartItem = useCartStore((state) => state.updateCartItem);
+  const selectedItem = useCartStore((state) => state.selectedCartItem);
+  const isOpen = useCartStore((state) => state.isUpdateDialogOpen);
+  const closeUpdateDialog = useCartStore((state) => state.closeUpdateDialog);
 
-  // Local state for form fields
-  const [price, setPrice] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [remark, setRemark] = useState("");
-  const [focusedField, setFocusedField] = useState(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm({
+    defaultValues: {
+      price: "",
+      quantity: "",
+      remark: "",
+    },
+  });
 
   // Populate form when item changes
   useEffect(() => {
-    if (item) {
-      setPrice(item.price ?? "");
-      setQuantity(item.quantity ?? "");
-      setRemark(item.remark ?? "");
+    if (selectedItem) {
+      reset({
+        price: selectedItem.price ?? "",
+        quantity: selectedItem.quantity ?? "",
+        remark: selectedItem.remark ?? "",
+      });
+    } else {
+      reset({ price: "", quantity: "", remark: "" });
     }
-  }, [item]);
+  }, [selectedItem, reset]);
 
-  const handleConfirm = () => {
-    if (!quantity || !price) return;
+  const handleConfirm = handleSubmit(({ price, quantity, remark }) => {
+    if (!selectedItem?.name) return;
     updateCartItem({
-      ...item,
+      ...selectedItem,
       price: Number(price),
       quantity: Number(quantity),
       remark,
     });
-    setIsOpen(false);
-    setFocusedField(null); // close keyboard too
-  };
-
-  const onKeyboardChange = (input) => {
-    if (focusedField === "price") setPrice(input);
-    if (focusedField === "quantity") setQuantity(input);
-    if (focusedField === "remark") setRemark(input);
-  };
+    closeUpdateDialog();
+  });
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        setIsOpen(open);
-        if (!open) setFocusedField(null); // hide keyboard when dialog closes
+        if (!open) {
+          closeUpdateDialog();
+        }
       }}
     >
       <DialogContent className="p-6 rounded-xl bg-white shadow-lg">
         <div>
           <DialogHeader className="mb-4">
-            {item?.name && (
+            {selectedItem?.name && (
               <DialogTitle className="text-xl font-semibold">
-                {item.name}
+                {selectedItem.item_name || selectedItem.name}
               </DialogTitle>
             )}
           </DialogHeader>
-          <div className="space-y-4">
+          <form onSubmit={handleConfirm} className="space-y-4">
             {/* Price */}
             <div>
               <label className="block text-sm font-medium mb-1">Price</label>
-              <Input
-                type="text"
-                value={price}
-                onFocus={() => setFocusedField("price")}
-                onBlur={() => setFocusedField(null)}
-                onChange={(e) => setPrice(e.target.value)}
-                className="w-full"
-              />
+              <Input disabled type="number" step="0.01" min="0" {...register("price")} className="w-full" />
             </div>
             {/* Quantity */}
             <div>
               <label className="block text-sm font-medium mb-1">Quantity</label>
-              <Input
-                type="text"
-                value={quantity}
-                onFocus={() => setFocusedField("quantity")}
-                onBlur={() => setFocusedField(null)}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="w-full"
-              />
+              <Input type="number" min="1" {...register("quantity")} className="w-full" />
             </div>
             {/* Preparation Remark */}
             <div>
               <label className="block text-sm font-medium mb-1">Preparation Remark</label>
               <Textarea
-                value={remark}
-                onFocus={() => setFocusedField("remark")}
-                onBlur={() => setFocusedField(null)}
-                onChange={(e) => setRemark(e.target.value)}
+                {...register("remark")}
                 placeholder="Add a preparation remark..."
                 className="w-full"
               />
             </div>
-          </div>
-          {/* Actions */}
-          <div className="mt-6 flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsOpen(false);
-                setFocusedField(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="bg-cyan-600 text-white hover:bg-cyan-700"
-              onClick={handleConfirm}
-            >
-              OK
-            </Button>
-          </div>
+            {/* Actions */}
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  closeUpdateDialog();
+                  reset();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                OK
+              </Button>
+            </div>
+          </form>
         </div>
-        
       </DialogContent>
     </Dialog>
   );

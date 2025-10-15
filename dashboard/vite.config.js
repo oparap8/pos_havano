@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
 import path from "path";
+import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,7 +13,7 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1500,
-    outDir: `../urugano/public/frontend`,
+    outDir: path.resolve(__dirname, "../havano_pos_addson/public/dashboard"),
     emptyOutDir: true,
     target: "es2015",
     sourcemap: true,

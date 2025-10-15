@@ -1,6 +1,6 @@
-import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva } from "class-variance-authority";
+import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -18,12 +18,14 @@ const badgeVariants = cva(
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         pending: "border-transparent bg-orange-500 [a&]:hover:bg-orange-500/90",
-        served: "border-transparent bg-yellow-500 [a&]:hover:bg-yellow-500/90",
-        paid: "border-transparent bg-green-500 [a&]:hover:bg-green-500/90",
-        unpaid: "border-transparent bg-red-500 [a&]:hover:bg-red-500/90",
         available: "border-transparent bg-green-600 text-green-100",
         occupied: "border-transparent bg-yellow-500 text-yellow-100",
         booked: "border-transparent bg-red-600 text-red-100",
+        open: "border-transparent bg-blue-600 text-blue-50 [a&]:hover:bg-blue-700",
+        closed:
+          "border-transparent bg-gray-600 text-gray-100 [a&]:hover:bg-gray-700",
+        voided:
+          "border-transparent bg-neutral-500 text-neutral-100 line-through [a&]:hover:bg-neutral-600",
       },
     },
     defaultVariants: {
@@ -48,4 +50,4 @@ function Badge({
   );
 }
 
-export { Badge, badgeVariants }
+export { Badge }
