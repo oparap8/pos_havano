@@ -77,7 +77,7 @@ const UpdateCartDialog = () => {
             {/* Price */}
             <div>
               <label className="block text-sm font-medium mb-1">Price</label>
-              <Input type="number" step="0.01" min="0" {...register("price")} className="w-full" />
+              <Input disabled type="number" step="0.01" min="0" {...register("price")} className="w-full" />
             </div>
             {/* Quantity */}
             <div>
